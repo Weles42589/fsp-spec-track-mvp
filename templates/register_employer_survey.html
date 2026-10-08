@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{# Шаг 2 регистрации работодателя: анкета из шести вопросов → уровень процессов (раздел 14). #}
+{% block content %}
+<ol class="steps">
+    {% for item in steps %}
+        <li class="{% if loop.index == step %}current{% elif loop.index < step %}done{% endif %}">{{ item }}</li>
+    {% endfor %}
+</ol>
+
+<div class="grid-2">
+    <article>
+        <h1>Анкета организации процессов</h1>
+        <p class="small muted">Компания: <strong>{{ employer.company }}</strong>.
+            Текущий уровень: {{ tier_title(employer.tier) }}
+            <span class="tier-dots" aria-hidden="true">
+                {% for dot in [1, 2, 3] %}<i class="{% if dot <= employer.tier %}on{% endif %}"></i>{% endfor %}
+            </span></p>
+
+        <form action="/register/employer/survey" method="post">
+            {% include "_partial_survey_form.html" %}
+            <div class="actions">
+                <button type="submit">Сохранить ответы и открыть кабинет</button>
+            </div>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Что вы увидите после ответов</h3>
+            <dl class="kv">
+                {% for tier in [3, 2, 1] %}
+                    <dt>{{ tier_title(tier) }}</dt>
+                    <dd class="tiny">{{ TIER_FIELDS[tier] | join(', ') }}</dd>
+                {% endfor %}
+            </dl>
+            <p class="tiny muted">Ответы можно изменить в кабинете — уровень и состав
+                видимых полей пересчитаются сразу.</p>
+        </article>
+        <article class="card note-accent">
+            <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

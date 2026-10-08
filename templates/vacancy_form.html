@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{# Новая потребность работодателя (раздел 10.2). `values` — строки формы,
+   `errors` — сообщения валидации из routers.employer.vacancy_from_form. #}
+{% block content %}
+{% set stack_value = values.get('stack') or '' %}
+{% if stack_value is not string %}{% set stack_value = stack_value | join(', ') %}{% endif %}
+
+<div class="page-head">
+    <div>
+        <h1>Новая потребность</h1>
+        <p class="small muted">{{ employer.company }} · после сохранения платформа
+            подберёт кандидатов и покажет объяснение релевантности.</p>
+    </div>
+    <div class="actions">
+        <a href="/employer" role="button" class="small secondary">В кабинет</a>
+    </div>
+</div>
+
+{% if errors %}
+    <div class="errors" role="alert">
+        <strong>Потребность не сохранена:</strong>
+        <ul>
+            {% for item in errors %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<div class="grid-2">
+    <article>
+        <form action="/employer/vacancies/new" method="post">
+            <label for="title">Должность *
+                <input type="text" id="title" name="title" required
+                       value="{{ values.get('title') or '' }}" placeholder="Backend-разработчик">
+            </label>
+
+            <div class="grid">
+                <label for="specialization">Специализация *
+                    <select id="specialization" name="specialization" required>
+                        <option value="">выберите специализацию</option>
+                        {% for code, title in SPECIALIZATIONS.items() %}
+                            <option value="{{ code }}"
+                                    {% if values.get('specialization') == code %}selected{% endif %}>{{ title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label for="grade">Грейд *
+                    <select id="grade" name="grade" required>
+                        <option value="">выберите грейд</option>
+                        {% for code, title in GRADES.items() %}
+                            <option value="{{ code }}"
+                                    {% if values.get('grade') == code %}selected{% endif %}>{{ title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+
+            <label for="grade_match">Как сопоставлять грейд кандидата
+                <select id="grade_match" name="grade_match">
+                    {% for code, title in GRADE_MATCH_MODES.items() %}
+                        <option value="{{ code }}"
+                                {% if (values.get('grade_match') or 'any') == code %}selected{% endif %}>{{ title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label for="stack">Стек (через запятую)
+                <input type="text" id="stack" name="stack" value="{{ stack_value }}"
+                       placeholder="Python, FastAPI, PostgreSQL">
+                <small class="tiny muted">Совпадение элементов стека — один из критериев
+                    релевантности (вес {{ MATCH_WEIGHTS.stack }}).</small>
+            </label>
+
+            <div class="grid">
+                <label for="salary_min">Вилка: от, ₽ *
+                    <input type="number" id="salary_min" name="salary_min" min="0" step="1000"
+                           value="{{ values.get('salary_min') or '' }}" placeholder="180000">
+                </label>
+                <label for="salary_max">Вилка: до, ₽ *
+                    <input type="number" id="salary_max" name="salary_max" min="0" step="1000"
+                           value="{{ values.get('salary_max') or '' }}" placeholder="260000">
+                </label>
+            </div>
+            <div class="grid">
+                <label for="format">Формат работы *
+                    <select id="format" name="format" required>
+                        <option value="">выберите формат</option>
+                        {% for code, title in VACANCY_FORMATS.items() %}
+                            <option value="{{ code }}"
+                                    {% if (values.get('format') or 'remote') == code %}selected{% endif %}>{{ title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label for="city">Город
+                    <input type="text" id="city" name="city" value="{{ values.get('city') or '' }}"
+                           placeholder="Москва">
+                </label>
+            </div>
+
+            <label for="team_size">Размер команды
+                <input type="text" id="team_size" name="team_size"
+                       value="{{ values.get('team_size') or '' }}" placeholder="6 человек, 2 команды">
+            </label>
+
+            <label for="description">Описание задачи
+                <textarea id="description" name="description" rows="5"
+                          placeholder="Что предстоит делать, какие процессы выстроены, как проходит отбор">{{ values.get('description') or '' }}</textarea>
+            </label>
+
+            <label for="open">
+                <input type="checkbox" id="open" name="open" value="on"
+                       {% if values.get('open') %}checked{% endif %}>
+                Публиковать в банке потребностей: кандидаты видят карточку и могут откликнуться
+            </label>
+
+            <div class="actions">
+                <button type="submit">Создать потребность</button>
+                <a href="/employer" role="button" class="secondary">Отмена</a>
+            </div>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Что увидит кандидат</h3>
+            <ul class="tiny">
+                <li>должность, компания и специализация;</li>
+                <li>грейд и правило сопоставления грейда;</li>
+                <li>вилка: {{ salary_note(values.get('salary_min') or 0, values.get('salary_max') or 0) }};</li>
+                <li>формат: {{ format_title(values.get('format') or 'remote') }}, город и размер команды;</li>
+                <li>рейтинг компании по демонстрационным сигналам.</li>
+            </ul>
+            <p class="tiny muted">ФИО и контакты кандидата раскрываются только после того,
+                как он принял приглашение. {{ CONTACT_REVEAL_NOTE }}.</p>
+        </article>
+
+        <article class="card">
+            <h3>Как отбираются кандидаты</h3>
+            <ol class="tiny">
+                <li>профиль заполнен полностью и открыт в банке;</li>
+                <li>проходит матрицу видимости для вашего уровня процессов;</li>
+                <li>специализация совпадает со специализацией потребности;</li>
+                <li>сортировка по релевантности, внутри равных — по разделу 6.6.</li>
+            </ol>
+            <p class="tiny muted">Текущий уровень: <strong>{{ tier_title(employer.tier) }}</strong>.
+                Видимые поля: {{ TIER_FIELDS.get(employer.tier, []) | join(', ') }}.</p>
+            <div class="card-foot">
+                <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+            </div>
+        </article>
+
+        <article class="card note-accent">
+            <h3>Потребность или вакансия</h3>
+            <p class="small">Потребность можно оставить скрытой (снять флажок публикации):
+                она не попадёт в банк, но подбор кандидатов и приглашения продолжат работать.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}
+

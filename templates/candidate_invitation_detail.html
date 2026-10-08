@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{# Приглашение подробно: решение принять/отклонить (разделы 6.7, 10.4). #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Приглашение от {{ employer.company if employer else vacancy.company }}</h1>
+        <p class="small muted">{{ vacancy.title }} · {{ salary_note }}
+            · статус <span class="badge badge-{{ invitation.status }}">
+                {{ status_title(invitation.status) }}</span></p>
+    </div>
+    <a href="/candidate/invitations" role="button" class="small secondary">Все приглашения</a>
+</div>
+
+{% if invitation.is_new %}
+    <div class="flash flash-info" role="status">Приглашение новое — после открытия
+        работодатель увидит статус «просмотрено».</div>
+{% endif %}
+
+<div class="grid-2">
+    <article class="card">
+        <h2>Потребность</h2>
+        {% set card = vacancy %}
+        {% set card_url = '/needs/' ~ vacancy.id %}
+        {% include "_partial_vacancy_card.html" %}
+
+        {% if vacancy.description %}
+            <p class="small">{{ vacancy.description }}</p>
+        {% endif %}
+
+        <div class="card-foot">
+            <a href="/needs/{{ vacancy.id }}" role="button" class="small secondary">
+                Открыть потребность</a>
+        </div>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Сообщение работодателя</h3>
+            {% if invitation.message %}
+                <p class="small">«{{ invitation.message }}»</p>
+            {% else %}
+                <p class="small muted">Сообщение не добавлено.</p>
+            {% endif %}
+            <p class="tiny muted">Отправлено {{ invitation.created_at }},
+                обновлено {{ invitation.updated_at }}.</p>
+        </article>
+
+        <article class="card">
+            <h3>Релевантность пары</h3>
+            {% include "_partial_match.html" %}
+        </article>
+
+        <article class="card">
+            <h3>Ваше решение</h3>
+            {% if invitation.status == 'accepted' %}
+                <div class="flash flash-success" role="status">
+                    Приглашение принято: работодатель видит ваши ФИО и контакты
+                    ({{ candidate.email }}) и статус «принято».
+                </div>
+            {% elif invitation.status == 'rejected' %}
+                <div class="flash flash-error" role="status">
+                    Приглашение отклонено: работодатель видит только статус «отклонено»,
+                    контакты не раскрываются.
+                </div>
+            {% else %}
+                <p class="small">Приняв приглашение, вы открываете работодателю ФИО и email.
+                    Отклонение раскрывает только статус.</p>
+                <div class="actions">
+                    <form action="/candidate/invitations/{{ invitation.id }}/accept" method="post">
+                        <button type="submit">Принять приглашение</button>
+                    </form>
+                    <form action="/candidate/invitations/{{ invitation.id }}/reject" method="post">
+                        <button type="submit" class="secondary">Отклонить</button>
+                    </form>
+                </div>
+            {% endif %}
+            <p class="tiny muted">{{ CONTACT_REVEAL_NOTE }}</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

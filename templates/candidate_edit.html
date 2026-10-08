@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{# Редактирование анкеты кандидата: те же поля, что на шаге 1 регистрации. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Редактирование профиля</h1>
+        <p class="small muted">{{ candidate.email }}</p>
+    </div>
+    <a href="/candidate" role="button" class="small secondary">Вернуться в кабинет</a>
+</div>
+
+{% set consent_given = True %}
+<form action="/candidate/edit" method="post">
+    {% include "_partial_profile_form.html" %}
+    <div class="actions">
+        <button type="submit">Сохранить изменения</button>
+        <a href="/candidate" role="button" class="secondary">Отмена</a>
+    </div>
+</form>
+
+<p class="note">После сохранения система пересчитает специализацию, грейд, категорию ФСП
+    и видимость профиля в банке. Сертификат КИТ и подключение истории ФСП изменяются
+    в кабинете кандидата.</p>
+{% endblock %}

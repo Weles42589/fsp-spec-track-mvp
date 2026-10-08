@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{# Приглашения работодателей кандидату (разделы 10.4, 13.3). Новые — сверху. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Приглашения</h1>
+        <p class="small muted">Всего: {{ rows | length }}{% if new_count %} ·
+            новых: {{ new_count }}{% endif %}</p>
+    </div>
+    <div class="actions">
+        <a href="/candidate" role="button" class="small secondary">Кабинет</a>
+        <a href="/needs" role="button" class="small">Банк потребностей</a>
+    </div>
+</div>
+
+<p class="note">Приглашение — основная механика платформы: работодатель выбирает вас
+    по анонимной карточке и релевантности. ФИО и контакты открываются ему только после
+    вашего согласия.</p>
+
+{% if rows %}
+    <div class="grid-2">
+        {% for row in rows %}
+            <article class="card{% if row.invitation.is_new %} is-new{% endif %}">
+                <div class="card-head">
+                    <h3><a href="/candidate/invitations/{{ row.invitation.id }}">
+                        {{ row.vacancy.title }}</a></h3>
+                    <span class="badge badge-{{ row.invitation.status }}">
+                        {{ status_title(row.invitation.status) }}</span>
+                </div>
+                <p class="small muted">{{ row.vacancy.company }} ·
+                    {{ row.vacancy.specialization_title }} ·
+                    {{ salary_note(row.invitation.salary_min, row.invitation.salary_max) }}</p>
+
+                {% if row.invitation.message %}
+                    <p class="small">«{{ row.invitation.message }}»</p>
+                {% endif %}
+
+                {% set match = row.match %}
+                {% include "_partial_match.html" %}
+
+                <div class="card-foot">
+                    <a href="/candidate/invitations/{{ row.invitation.id }}"
+                       role="button" class="small">Открыть приглашение</a>
+                    {% if row.invitation.status not in ['accepted', 'rejected'] %}
+                        <form action="/candidate/invitations/{{ row.invitation.id }}/accept"
+                              method="post">
+                            <button type="submit" class="small">Принять</button>
+                        </form>
+                        <form action="/candidate/invitations/{{ row.invitation.id }}/reject"
+                              method="post">
+                            <button type="submit" class="small secondary">Отклонить</button>
+                        </form>
+                    {% endif %}
+                </div>
+                <p class="tiny muted">Получено {{ row.invitation.created_at }}</p>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="flash flash-info">
+        Приглашений пока нет. Проверьте, что профиль заполнен полностью и открыт
+        в банке — иначе вы не участвуете в подборе.
+    </div>
+{% endif %}
+{% endblock %}

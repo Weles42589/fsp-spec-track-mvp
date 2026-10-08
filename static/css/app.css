@@ -1,0 +1,614 @@
+/* Дополнительные стили платформы «Спецтрек ФСП».
+ *
+ * База — Pico CSS v2 (static/css/pico.min.css): семантическая вёрстка без классов.
+ * Здесь только то, чего в Pico нет: шапка с навигацией, вспышки-уведомления,
+ * бейджи статусов, карточки банка, индикатор шагов регистрации, шкала совпадения
+ * и подсветка полей, скрытых матрицей видимости работодателя (раздел 8 ТЗ).
+ */
+
+:root {
+    --fsp-accent: #2f6f4e;
+    --fsp-accent-soft: #e7f1eb;
+    --fsp-muted: #6b7280;
+    --fsp-soft: #f5f7f6;
+    --fsp-line: #dde4e0;
+    --fsp-ok: #1f7a45;
+    --fsp-danger: #b42318;
+    --fsp-info: #1d4ed8;
+}
+
+/* ------------------------------------------------------------------ шапка */
+
+header.site-header {
+    background: #fff;
+    border-bottom: 1px solid var(--fsp-line);
+    padding: .55rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+header.site-header .container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.25rem;
+    margin: 0 auto;
+    max-width: 1180px;
+    padding: 0 1rem;
+}
+
+a.brand {
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: var(--fsp-accent);
+    text-decoration: none;
+    font-size: 1.05rem;
+    white-space: nowrap;
+}
+
+a.brand small {
+    display: block;
+    font-weight: 400;
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--fsp-muted);
+}
+
+nav.site-nav {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+nav.site-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+nav.site-nav li {
+    margin: 0;
+}
+
+nav.site-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .3rem .55rem;
+    border-radius: 6px;
+    font-size: .86rem;
+    text-decoration: none;
+    color: #22312b;
+}
+
+nav.site-nav a:hover {
+    background: var(--fsp-soft);
+}
+
+nav.site-nav a[aria-current="page"] {
+    background: var(--fsp-accent-soft);
+    color: var(--fsp-accent);
+    font-weight: 600;
+}
+
+nav.site-nav .nav-right {
+    margin-left: auto;
+}
+
+nav.site-nav .who {
+    font-size: .78rem;
+    color: var(--fsp-muted);
+    padding: .3rem .4rem;
+}
+
+main.container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem;
+}
+
+footer.site-footer {
+    border-top: 1px solid var(--fsp-line);
+    background: var(--fsp-soft);
+    padding: 1rem 0 2rem;
+    font-size: .8rem;
+    color: var(--fsp-muted);
+}
+
+/* ------------------------------------------------------- вспышки (flash) */
+
+.flash {
+    border: 1px solid var(--fsp-line);
+    border-left: 4px solid var(--fsp-info);
+    border-radius: 6px;
+    background: #fff;
+    padding: .6rem .85rem;
+    margin: 0 0 .75rem;
+    font-size: .9rem;
+}
+
+.flash-success {
+    border-left-color: var(--fsp-ok);
+    background: #f2faf5;
+}
+
+.flash-error {
+    border-left-color: var(--fsp-danger);
+    background: #fdf4f3;
+}
+
+.flash-info {
+    border-left-color: var(--fsp-info);
+    background: #f3f6fd;
+}
+
+.errors {
+    border: 1px solid #f0c8c4;
+    border-left: 4px solid var(--fsp-danger);
+    background: #fdf4f3;
+    border-radius: 6px;
+    padding: .6rem .85rem .6rem 1.6rem;
+    margin: 0 0 1rem;
+    font-size: .9rem;
+}
+
+/* ------------------------------------------------------------- бейджи */
+
+.badge {
+    display: inline-block;
+    padding: .12rem .5rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    line-height: 1.5;
+    font-weight: 600;
+    letter-spacing: .02em;
+    border: 1px solid var(--fsp-line);
+    background: var(--fsp-soft);
+    color: #374151;
+    white-space: nowrap;
+}
+
+.badge-new {
+    background: var(--fsp-accent);
+    border-color: var(--fsp-accent);
+    color: #fff;
+}
+
+.badge-sent {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #3730a3;
+}
+
+.badge-viewed {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #92400e;
+}
+
+.badge-accepted {
+    background: #ecfdf3;
+    border-color: #a7f3d0;
+    color: var(--fsp-ok);
+}
+
+.badge-rejected {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: var(--fsp-danger);
+}
+
+.badge-hidden {
+    border-style: dashed;
+    background: #fff;
+    color: var(--fsp-muted);
+    font-weight: 500;
+}
+
+.badge-count {
+    background: var(--fsp-danger);
+    border-color: var(--fsp-danger);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0 .38rem;
+    font-size: .68rem;
+}
+
+/* ------------------------------------------------------------- карточки */
+
+.grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    margin: 0 0 1rem;
+}
+
+.grid-2 {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .grid-2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+article.card {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--fsp-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+}
+
+article.card.is-new {
+    border-color: var(--fsp-accent);
+    box-shadow: 0 0 0 2px var(--fsp-accent-soft);
+}
+
+article.card h3,
+article.card h4 {
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+article.card .card-foot {
+    margin-top: auto;
+    padding-top: .5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.card-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    align-items: baseline;
+    justify-content: space-between;
+}
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.chip {
+    background: var(--fsp-soft);
+    border: 1px solid var(--fsp-line);
+    border-radius: 999px;
+    padding: .08rem .55rem;
+    font-size: .76rem;
+    color: #374151;
+}
+
+.chip-accent {
+    background: var(--fsp-accent-soft);
+    border-color: #bfd9cb;
+    color: var(--fsp-accent);
+    font-weight: 600;
+}
+
+/* ------------------------------------------- демо-доступы на странице входа */
+
+.demo-accounts {
+    padding: 0;
+    margin: 0 0 .6rem;
+    list-style: none;
+}
+
+.demo-accounts li {
+    padding: .35rem 0;
+    border-bottom: 1px dashed var(--fsp-line);
+}
+
+.demo-accounts li:last-child {
+    border-bottom: none;
+}
+
+.demo-accounts code {
+    display: block;
+    font-size: .8rem;
+}
+
+/* ---------------------------------------------------- шкала совпадения */
+
+.match {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+}
+
+.match-bar {
+    flex: 1 1 auto;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--fsp-soft);
+    border: 1px solid var(--fsp-line);
+    overflow: hidden;
+    min-width: 70px;
+}
+
+.match-bar span {
+    display: block;
+    height: 100%;
+    background: var(--fsp-accent);
+}
+
+.match-score {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--fsp-accent);
+    min-width: 3.2rem;
+    text-align: right;
+}
+
+
+/* ------------------------------------------- матрица видимости (раздел 8) */
+
+dl.kv {
+    display: grid;
+    grid-template-columns: minmax(9rem, auto) minmax(0, 1fr);
+    gap: .25rem .9rem;
+    margin: 0;
+    font-size: .9rem;
+}
+
+dl.kv dt {
+    color: var(--fsp-muted);
+    font-weight: 500;
+}
+
+dl.kv dd {
+    margin: 0;
+}
+
+.field-locked {
+    display: inline-block;
+    border: 1px dashed var(--fsp-line);
+    border-radius: 6px;
+    padding: .05rem .45rem;
+    background: var(--fsp-soft);
+    color: var(--fsp-muted);
+    font-size: .82rem;
+    font-style: italic;
+}
+
+.note {
+    background: var(--fsp-soft);
+    border: 1px solid var(--fsp-line);
+    border-radius: 6px;
+    padding: .55rem .75rem;
+    font-size: .82rem;
+    color: #4b5563;
+    margin: 0 0 .8rem;
+}
+
+.note-accent {
+    background: var(--fsp-accent-soft);
+    border-color: #bfd9cb;
+    color: #23523b;
+}
+
+.muted {
+    color: var(--fsp-muted);
+}
+
+.small {
+    font-size: .82rem;
+}
+
+.tiny {
+    font-size: .76rem;
+}
+
+.empty {
+    border: 1px dashed var(--fsp-line);
+    border-radius: 8px;
+    background: var(--fsp-soft);
+    padding: 1.4rem 1rem;
+    text-align: center;
+    color: var(--fsp-muted);
+    font-size: .92rem;
+    margin: 0 0 1rem;
+}
+
+/* --------------------------------------------------------- шаги анкеты */
+
+ol.steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 0 0 1.25rem;
+}
+
+ol.steps li {
+    counter-increment: step;
+    flex: 1 1 8rem;
+    border: 1px solid var(--fsp-line);
+    border-radius: 6px;
+    background: #fff;
+    padding: .45rem .6rem .45rem 2.1rem;
+    position: relative;
+    font-size: .82rem;
+    color: var(--fsp-muted);
+}
+
+ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: .5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 50%;
+    background: var(--fsp-soft);
+    border: 1px solid var(--fsp-line);
+    color: var(--fsp-muted);
+    font-size: .74rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+ol.steps li.done {
+    color: var(--fsp-ok);
+}
+
+ol.steps li.done::before {
+    content: "✓";
+    background: #ecfdf3;
+    border-color: #a7f3d0;
+    color: var(--fsp-ok);
+}
+
+ol.steps li.current {
+    border-color: var(--fsp-accent);
+    background: var(--fsp-accent-soft);
+    color: #23523b;
+    font-weight: 600;
+}
+
+ol.steps li.current::before {
+    background: var(--fsp-accent);
+    border-color: var(--fsp-accent);
+    color: #fff;
+}
+
+/* ------------------------------------------------------------- прочее */
+
+.page-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1rem;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.page-head h1,
+.page-head h2 {
+    margin: 0;
+}
+
+.actions,
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    align-items: center;
+}
+
+.actions form,
+.btn-row form {
+    margin: 0;
+}
+
+.btn-row button,
+.btn-row a[role="button"],
+.actions button {
+    margin: 0;
+    width: auto;
+}
+
+button.small,
+a[role="button"].small {
+    padding: .25rem .7rem;
+    font-size: .82rem;
+    width: auto;
+    margin: 0;
+}
+
+table.compact {
+    font-size: .87rem;
+}
+
+table.compact th,
+table.compact td {
+    padding: .45rem .55rem;
+}
+
+.tier-dots {
+    display: inline-flex;
+    gap: .2rem;
+    vertical-align: middle;
+}
+
+.tier-dots i {
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: var(--fsp-line);
+    display: inline-block;
+}
+
+.tier-dots i.on {
+    background: var(--fsp-accent);
+}
+
+.hero {
+    background: linear-gradient(135deg, var(--fsp-accent-soft), #fff 70%);
+    border: 1px solid var(--fsp-line);
+    border-radius: 10px;
+    padding: 1.6rem 1.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.hero h1 {
+    margin: 0 0 .5rem;
+}
+
+.stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1rem 0 0;
+}
+
+.stats div strong {
+    display: block;
+    font-size: 1.5rem;
+    color: var(--fsp-accent);
+    line-height: 1.1;
+}
+
+.stats div span {
+    font-size: .8rem;
+    color: var(--fsp-muted);
+}
+
+section.block {
+    margin-bottom: 1.75rem;
+}
+
+section.block > h2 {
+    font-size: 1.15rem;
+    margin-bottom: .6rem;
+}
+
+a.no-underline {
+    text-decoration: none;
+}
+

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{# Шаг 1 регистрации работодателя: данные компании (раздел 7.1). #}
+{% block content %}
+<ol class="steps">
+    {% for item in steps %}
+        <li class="{% if loop.index == step %}current{% elif loop.index < step %}done{% endif %}">{{ item }}</li>
+    {% endfor %}
+</ol>
+
+<div class="grid-2">
+    <article>
+        <h1>Анкета работодателя</h1>
+        <p class="small muted">Email: <strong>{{ email }}</strong>. Дальше — анкета из шести
+            вопросов о процессах: она определит, какие профили кандидатов вам доступны.</p>
+
+        {% if errors %}
+            <div class="errors" role="alert">
+                <strong>Анкета не сохранена:</strong>
+                <ul>
+                    {% for item in errors %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form action="/register/employer" method="post">
+            <label for="company">Название компании *
+                <input type="text" id="company" name="company" required
+                       value="{{ values.get('company') or '' }}" placeholder="АО «Цифровой атом»">
+            </label>
+
+            <div class="grid-2">
+                <label for="position">Должность контактного лица *
+                    <input type="text" id="position" name="position" required
+                           value="{{ values.get('position') or '' }}" placeholder="CTO">
+                </label>
+                <label for="contact_name">Имя контактного лица
+                    <input type="text" id="contact_name" name="contact_name"
+                           value="{{ values.get('contact_name') or '' }}" placeholder="Иванова Мария">
+                </label>
+            </div>
+
+            <label for="city">Город
+                <input type="text" id="city" name="city"
+                       value="{{ values.get('city') or '' }}" placeholder="Москва">
+            </label>
+
+            <label for="description">О компании
+                <textarea id="description" name="description" rows="4"
+                          placeholder="Продукт, команда, инженерные практики">{{ values.get('description') or '' }}</textarea>
+            </label>
+
+            <label for="consent">
+                <input type="checkbox" id="consent" name="consent" value="on"
+                       {% if values.get('consent') %}checked{% endif %} required>
+                Согласен на обработку персональных данных (152-ФЗ) *
+            </label>
+
+            <div class="actions">
+                <button type="submit">Сохранить и перейти к анкете процессов</button>
+            </div>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Зачем нужна анкета процессов</h3>
+            <p class="small">Шесть нейтральных вопросов определяют уровень организации
+                процессов. Он задаёт состав видимых полей кандидатов:</p>
+            <dl class="kv">
+                {% for tier in [3, 2, 1] %}
+                    <dt>{{ tier_title(tier) }}</dt>
+                    <dd class="tiny">{{ TIER_DESCRIPTIONS[tier] }}</dd>
+                {% endfor %}
+            </dl>
+            <p class="tiny muted">Цифра уровня видна только вам: кандидатам она не раскрывается.</p>
+        </article>
+        <article class="card">
+            <h3>Контакты кандидатов</h3>
+            <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+            <p class="tiny muted">{{ RATING_DEMO_NOTE }}</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

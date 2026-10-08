@@ -1,0 +1,107 @@
+{# Поля анкеты кандидата: шаг 1 регистрации и редактирование профиля (разделы 6.3, 7.2).
+   Ожидает `values` (строки формы) и необязательный `errors` (список сообщений).
+   Видимость в банке здесь не переключается — для этого отдельная форма в кабинете. #}
+{% if errors %}
+    <div class="errors" role="alert">
+        <strong>Анкета не сохранена — проверьте ответы:</strong>
+        <ul>
+            {% for item in errors %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% set stack_value = values.get('stack') %}
+{% set ambition_selected = values.get('ambitions') or [] %}
+
+<label for="name">Имя и фамилия *
+    <input type="text" id="name" name="name" required
+           value="{{ values.get('name') or '' }}" placeholder="Петров Артём">
+</label>
+
+<div class="grid-2">
+    <label for="specialization">Специализация
+        <select id="specialization" name="specialization">
+            <option value="">Определить автоматически</option>
+            {% for code, label in SPECIALIZATIONS.items() %}
+                <option value="{{ code }}"
+                        {% if values.get('specialization') == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label for="city">Город
+        <input type="text" id="city" name="city"
+               value="{{ values.get('city') or '' }}" placeholder="Москва">
+    </label>
+</div>
+
+<fieldset>
+    <legend>Барометр амбиций — вопрос 1 из 3</legend>
+    <label for="team_role">Какую роль вы хотите занимать в команде? *
+        <select id="team_role" name="team_role" required>
+            <option value="">Выберите роль</option>
+            {% for role in TEAM_ROLES %}
+                <option value="{{ role }}"
+                        {% if values.get('team_role') == role %}selected{% endif %}>{{ role | capitalize }}</option>
+            {% endfor %}
+        </select>
+    </label>
+</fieldset>
+
+<fieldset>
+    <legend>Барометр амбиций — вопрос 2 из 3</legend>
+    <label for="stack">Ваш основной стек
+        <textarea id="stack" name="stack" rows="2"
+                  placeholder="Python, FastAPI, PostgreSQL">{% if stack_value is string %}{{ stack_value }}{% else %}{{ (stack_value or []) | join(', ') }}{% endif %}</textarea>
+    </label>
+    <small class="muted">Свободный ввод через запятую. Используется для определения
+        специализации и ширины стека.</small>
+</fieldset>
+
+<fieldset>
+    <legend>Барометр амбиций — вопрос 3 из 3</legend>
+    <label for="work_format">Как вам комфортнее работать? *
+        <select id="work_format" name="work_format" required>
+            <option value="">Выберите формат</option>
+            {% for code, label in WORK_FORMATS.items() %}
+                <option value="{{ code }}"
+                        {% if values.get('work_format') == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+</fieldset>
+
+<div class="grid-2">
+    <label for="fsp_role">Роль в команде ФСП
+        <select id="fsp_role" name="fsp_role">
+            <option value="">Не указана</option>
+            {% for role in FSP_ROLES %}
+                <option value="{{ role }}"
+                        {% if values.get('fsp_role') == role %}selected{% endif %}>{{ role | capitalize }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <p class="small muted">Грейд в анкете не выбирается: он считается по приоритету
+        «сертификат КИТ → барометр амбиций → junior» (раздел 6.2).</p>
+</div>
+
+<p class="small">Флаги амбициозности — можно отметить вручную, система добавит
+    вычисленные автоматически:</p>
+<div class="chips">
+    {% for code, label in AMBITIONS.items() %}
+        <label for="ambition-{{ code }}" class="chip">
+            <input type="checkbox" id="ambition-{{ code }}" name="ambitions" value="{{ code }}"
+                   {% if code in ambition_selected %}checked{% endif %}>
+            {{ label }}
+        </label>
+    {% endfor %}
+</div>
+
+{% if not consent_given %}
+    <label for="consent">
+        <input type="checkbox" id="consent" name="consent" value="on"
+               {% if values.get('consent') %}checked{% endif %} required>
+        Согласен на обработку персональных данных (152-ФЗ) *
+    </label>
+{% endif %}

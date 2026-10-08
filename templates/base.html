@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} · ФСП «спец. трек»</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/pico.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/app.css') }}">
+</head>
+<body>
+{% set path = request.url.path %}
+<header class="site-header">
+    <div class="container">
+        <a class="brand" href="/">Спецтрек&nbsp;ФСП<small>амбиции × процессы</small></a>
+        <nav class="site-nav" aria-label="Основная навигация">
+            <ul>
+                {% if not me %}
+                    <li><a href="/login"{% if path.startswith('/login') %} aria-current="page"{% endif %}>Вход</a></li>
+                    <li><a href="/login?role=candidate">Я кандидат</a></li>
+                    <li><a href="/login?role=employer">Я работодатель</a></li>
+                {% elif not me.is_authenticated %}
+                    <li><a href="/verify"{% if path == '/verify' %} aria-current="page"{% endif %}>Подтверждение email</a></li>
+                {% elif me.needs_registration %}
+                    <li><a href="{{ me.register_url }}">Завершить регистрацию</a></li>
+                {% elif me.is_candidate %}
+                    <li><a href="/candidate"{% if path == '/candidate' %} aria-current="page"{% endif %}>Кабинет</a></li>
+                    <li><a href="/needs"{% if path.startswith('/needs') %} aria-current="page"{% endif %}>Потребности</a></li>
+                    <li><a href="/candidate/invitations"{% if path.startswith('/candidate/invitations') %} aria-current="page"{% endif %}>Приглашения</a></li>
+                    <li><a href="/candidate/applications"{% if path.startswith('/candidate/applications') %} aria-current="page"{% endif %}>Мои отклики</a></li>
+                    <li><a href="/candidate/edit"{% if path.startswith('/candidate/edit') %} aria-current="page"{% endif %}>Анкета</a></li>
+                {% elif me.is_employer %}
+                    <li><a href="/employer"{% if path == '/employer' %} aria-current="page"{% endif %}>Кабинет</a></li>
+                    <li><a href="/employer/bank"{% if path.startswith('/employer/bank') %} aria-current="page"{% endif %}>Банк кандидатов</a></li>
+                    <li><a href="/employer/vacancies/new"{% if path.startswith('/employer/vacancies') %} aria-current="page"{% endif %}>Потребности</a></li>
+                    <li><a href="/employer/applications"{% if path.startswith('/employer/applications') %} aria-current="page"{% endif %}>Отклики</a></li>
+                    <li><a href="/employer/invitations"{% if path.startswith('/employer/invitations') %} aria-current="page"{% endif %}>Приглашения</a></li>
+                    <li><a href="/employer/survey"{% if path.startswith('/employer/survey') %} aria-current="page"{% endif %}>Анкета процессов</a></li>
+                {% endif %}
+                {% if me %}
+                    <li class="nav-right"><span class="who">{{ me.title }}</span></li>
+                    <li>
+                        <form action="/logout" method="post">
+                            <button type="submit" class="secondary small">Выйти</button>
+                        </form>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main class="container">
+    {% if flash %}
+        <div class="flash flash-{{ flash.kind }}" role="status">{{ flash.message }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p class="tiny">MVP платформы «Спец. трек ФСП»: амбициозные ИТ-специалисты встречаются
+            с организациями с высоким уровнем процессов. Видимость профилей определяется
+            анкетою процессов работодателя (раздел 8 ТЗ).</p>
+        <p class="tiny">{{ AUTH_DEMO_NOTE }} {{ FSP_DEMO_NOTE }}</p>
+    </div>
+</footer>
+</body>
+</html>

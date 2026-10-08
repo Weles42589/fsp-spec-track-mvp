@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{# Лендинг (раздел 11.1): что за платформа, как устроен вход, счётчики банка. #}
+{% block content %}
+<section class="hero">
+    <h1>Спецтрек ФСП: амбиции встречаются с процессами</h1>
+    <p>Платформа для выпускников и участников ФСП, которые хотят влиять на решения,
+        и для организаций, где инженерные процессы действительно развиты.
+        Ранжирование и видимость профилей считаются по формальным правилам — без «магии».</p>
+    <div class="btn-row">
+        <a href="/login?role=candidate" role="button">Войти как кандидат</a>
+        <a href="/login?role=employer" role="button" class="secondary">Войти как работодатель</a>
+    </div>
+    {% if stats %}
+        <div class="stats">
+            <div><strong>{{ stats.candidates }}</strong><span>анкет в банке кандидатов</span></div>
+            <div><strong>{{ stats.vacancies }}</strong><span>открытых потребностей</span></div>
+            <div><strong>{{ stats.employers }}</strong><span>организаций прошли анкету процессов</span></div>
+        </div>
+    {% endif %}
+</section>
+
+<div class="grid-2">
+    <section class="block">
+        <h2>Как это работает у кандидата</h2>
+        <ol class="steps">
+            {% for step in CANDIDATE_STEPS %}
+                <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+        <p class="small">Барометр амбиций считает вердикт «амбициозный профиль» по четырём флагам
+            (порог — два). Грейд берётся из сертификата КИТ, иначе — из ручного выбора,
+            иначе — из барометра. История ФСП даёт баллы и категорию S–D.</p>
+        <ul class="chips">
+            {% for code, label in AMBITIONS.items() %}
+                <li class="chip">{{ label }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="block">
+        <h2>Как это работает у работодателя</h2>
+        <ol class="steps">
+            {% for step in EMPLOYER_STEPS %}
+                <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+        <p class="small">Шесть нейтральных вопросов анкеты определяют уровень организации
+            процессов, а он — какие поля кандидатов доступны и какие профили видны в банке.</p>
+        <dl class="kv">
+            {% for tier in [3, 2, 1] %}
+                <dt>{{ tier_title(tier) }}</dt>
+                <dd class="small">{{ TIER_DESCRIPTIONS[tier] }}</dd>
+            {% endfor %}
+        </dl>
+        <p class="note note-accent">{{ CONTACT_REVEAL_NOTE }}</p>
+    </section>
+</div>
+
+<section class="block">
+    <h2>Что происходит после входа</h2>
+    <div class="grid">
+        <article class="card">
+            <h3>Подбор по потребностям</h3>
+            <p class="small">Работодатель создаёт потребность: специализация, грейд, стек, вилка.
+                Система ранжирует кандидатов и объясняет каждую позицию процентом релевантности.</p>
+        </article>
+        <article class="card">
+            <h3>Приглашения, а не отклики</h3>
+            <p class="small">Основная механика — приглашение от работодателя. ФИО и контакты
+                кандидата раскрываются только после принятия приглашения.</p>
+        </article>
+        <article class="card">
+            <h3>Честные сноски</h3>
+            <p class="small">{{ FSP_DEMO_NOTE }}</p>
+            <p class="small">{{ RATING_DEMO_NOTE }}</p>
+        </article>
+    </div>
+</section>
+
+<p class="tiny muted">Техническая проверка стенда: <a href="/health">/health</a>,
+    документация API: <a href="/api/docs">/api/docs</a>.</p>
+{% endblock %}

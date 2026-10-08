@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{# Мои отклики (разделы 10.5, 13.3). #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Мои отклики</h1>
+        <p class="small muted">Откликов: {{ rows | length }}</p>
+    </div>
+    <div class="actions">
+        <a href="/needs" role="button" class="small">Банк потребностей</a>
+        <a href="/candidate" role="button" class="small secondary">Кабинет</a>
+    </div>
+</div>
+
+{% if rows %}
+    <article>
+        <table class="compact">
+            <thead>
+                <tr>
+                    <th>Потребность</th>
+                    <th>Компания</th>
+                    <th>Вилка</th>
+                    <th>Статус</th>
+                    <th>Отправлен</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td><a href="/needs/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a>
+                            <span class="tiny muted">{{ row.vacancy.specialization_title }}</span></td>
+                        <td>{{ row.vacancy.company }}</td>
+                        <td>{{ row.vacancy.salary_note }}</td>
+                        <td><span class="badge badge-{{ row.application.status }}">
+                            {{ status_title(row.application.status) }}</span></td>
+                        <td class="tiny">{{ row.application.created_at }}</td>
+                        <td><a href="/needs/{{ row.vacancy.id }}" role="button"
+                               class="small secondary">Открыть</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <div class="block">
+        <h2>Сообщения в откликах</h2>
+        {% for row in rows %}
+            {% if row.application.message %}
+                <article class="card">
+                    <div class="card-head">
+                        <h3>{{ row.vacancy.title }}</h3>
+                        <span class="badge badge-{{ row.application.status }}">
+                            {{ status_title(row.application.status) }}</span>
+                    </div>
+                    <p class="small">{{ row.application.message }}</p>
+                    <p class="tiny muted">Отправлен {{ row.application.created_at }},
+                        обновлён {{ row.application.updated_at }}.</p>
+                </article>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="flash flash-info">
+        Откликов пока нет. Откройте <a href="/needs">банк потребностей</a> — карточки
+        уже отсортированы по релевантности вашему профилю.
+    </div>
+{% endif %}
+{% endblock %}

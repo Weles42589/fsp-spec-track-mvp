@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{# Шаг 2 регистрации кандидата: история ФСП из реестра (раздел 9). #}
+{% block content %}
+<ol class="steps">
+    {% for item in steps %}
+        <li class="{% if loop.index == step %}current{% elif loop.index < step %}done{% endif %}">{{ item }}</li>
+    {% endfor %}
+</ol>
+
+<div class="grid-2">
+    <article>
+        <h1>История ФСП</h1>
+        <p class="small">Проверяем реестр ФСП по email <strong>{{ candidate.email }}</strong>.</p>
+
+        {% if fsp.connected %}
+            <div class="flash flash-success" role="status">
+                ФСП уже подключён: {{ fsp.score }} баллов, категория {{ fsp.category }}
+                ({{ fsp.category_title }}).
+            </div>
+        {% endif %}
+
+        {% if preview.name %}
+            <p class="note note-accent">В реестре найден участник: <strong>{{ preview.name }}</strong>.
+                Достижений: {{ preview.achievements | length }}.</p>
+            <table class="compact">
+                <thead>
+                    <tr>
+                        <th>Дисциплина</th>
+                        <th>Соревнование</th>
+                        <th>Место</th>
+                        <th>Роль</th>
+                        <th>Баллы</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in preview.achievements %}
+                        <tr>
+                            <td>{{ item.discipline }}</td>
+                            <td>{{ item.competition }}</td>
+                            <td>{{ place_text(item.place) }}</td>
+                            <td>{{ item.role or '—' }}</td>
+                            <td>{{ item.points }}</td>
+                            <td>{{ item.date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="small">Итог по правилам раздела 9.2: <strong>{{ fsp.score }} баллов</strong>,
+                категория <strong>{{ fsp.category }}</strong> — {{ fsp.category_title }}.
+                {% if fsp.best_role %}Лучшая роль в команде: {{ fsp.best_role }}.{% endif %}</p>
+        {% else %}
+            <p class="note">История в реестре ФСП не найдена. Это нормальный сценарий:
+                профиль остаётся в банке кандидатов, история ФСП даёт 0 баллов
+                и категорию D.</p>
+        {% endif %}
+
+        <form action="/register/candidate/fsp" method="post" class="actions">
+            {% if not fsp.connected %}
+                <button type="submit" name="action" value="connect">Подключить историю ФСП</button>
+            {% endif %}
+            <button type="submit" name="action" value="skip" class="secondary">
+                Пропустить и перейти к сертификату КИТ
+            </button>
+        </form>
+        <p class="tiny muted">{{ FSP_DEMO_NOTE }}</p>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Что даёт подключение</h3>
+            <ul class="tiny">
+                <li>баллы и категория S–D — участвуют в ранжировании;</li>
+                <li>дисциплины ФСП помогают определить специализацию, если она не выбрана вручную;</li>
+                <li>роль «капитан» или «архитектор» в ФСП добавляет флаг амбициозности.</li>
+            </ul>
+        </article>
+        <article class="card">
+            <h3>Email в демо-реестре</h3>
+            <ul class="chips">
+                {% for item in demo_emails %}
+                    <li class="chip{% if item == candidate.email %} chip-accent{% endif %}">{{ item }}</li>
+                {% endfor %}
+            </ul>
+            <p class="tiny muted">Ваш email: {{ candidate.email }}. Если его нет в списке —
+                сценарий «история не найдена».</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

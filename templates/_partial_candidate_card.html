@@ -1,0 +1,53 @@
+{# Карточка кандидата в банке: состав полей задан тиром работодателя (раздел 8).
+   Ожидает переменную `card` = helpers.candidate_card(candidate, employer.tier).
+   Заголовок и «ноги» карточки (кнопки) страницы добавляют сами вокруг этого блока. #}
+<div class="card-head">
+    <h3>{{ card.profile.name }}</h3>
+    {% if card.profile.verified %}
+        <span class="chip chip-accent">грейд верифицирован КИТ</span>
+    {% else %}
+        <span class="chip">грейд заявлен кандидатом</span>
+    {% endif %}
+</div>
+
+<p class="small muted">
+    {{ card.specialization_title }} · {{ card.grade_title }}
+    {% if card.profile.city %} · {{ card.profile.city }}{% endif %}
+    {% if card.profile.kit_score %} · баллы КИТ: {{ card.profile.kit_score }}{% endif %}
+</p>
+
+<ul class="chips">
+    <li class="chip chip-accent">ФСП: категория {{ card.profile.fsp_category }}
+        · {{ card.profile.fsp_score }} баллов</li>
+    {% if card.profile.is_ambitious %}
+        <li class="chip chip-accent">амбициозный профиль</li>
+    {% elif card.profile.ambition_hidden %}
+        <li class="chip"><span class="field-locked">амбициозность недоступна</span></li>
+    {% else %}
+        <li class="chip">профиль без выраженных амбиций</li>
+    {% endif %}
+    {% if card.profile.fsp_role %}
+        <li class="chip">роль в команде ФСП: {{ card.profile.fsp_role }}</li>
+    {% else %}
+        <li class="chip"><span class="field-locked">роль в команде ФСП недоступна</span></li>
+    {% endif %}
+</ul>
+
+{% if card.profile.stack %}
+    <ul class="chips">
+        {% for item in card.profile.stack %}
+            <li class="chip">{{ item }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+<p class="tiny muted">{{ card.profile.grade_note }}</p>
+
+{% if card.is_restricted %}
+    <p class="note">
+        <span class="field-locked">профиль закрыт</span>
+        {{ card.visibility_note }}{% if card.restricted_reason %} Причина: {{ card.restricted_reason }}.{% endif %}
+    </p>
+{% else %}
+    <p class="tiny muted">{{ card.visibility_note }}</p>
+{% endif %}

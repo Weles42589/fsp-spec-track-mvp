@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: fsp_agregator_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./database.db:/app/database.db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped

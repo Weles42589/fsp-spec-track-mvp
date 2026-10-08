@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{# Банк кандидатов (разделы 8, 10.1): анонимные карточки, состав полей зависит от тира.
+   Контекст: employer, rows (по элементу на карточку), spec, open_count,
+   restricted_count, tier_label (строка), visible_fields. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Банк кандидатов</h1>
+        <p class="small muted">Анкеты с полным профилем. Список анонимный: ФИО и контакты
+            раскрываются только после того, как кандидат принял приглашение.</p>
+    </div>
+    <div class="actions">
+        <span class="badge badge-count">{{ tier_label }}</span>
+        <span class="tier-dots" aria-hidden="true">
+            {% for dot in [1, 2, 3] %}<i class="{% if dot <= employer.tier %}on{% endif %}"></i>{% endfor %}
+        </span>
+        <a href="/employer/vacancies/new" role="button" class="small secondary">Новая потребность</a>
+    </div>
+</div>
+
+<article>
+    <form action="/employer/bank" method="get">
+        <div class="grid">
+            <label for="spec">Специализация
+                <select id="spec" name="spec">
+                    <option value="">все специализации</option>
+                    {% for code, title in SPECIALIZATIONS.items() %}
+                        <option value="{{ code }}" {% if spec == code %}selected{% endif %}>{{ title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+        <div class="actions">
+            <button type="submit" class="small">Показать</button>
+            {% if spec %}
+                <a href="/employer/bank" role="button" class="small secondary">Сбросить фильтр</a>
+            {% endif %}
+        </div>
+    </form>
+    <p class="tiny muted">Открытых профилей: <strong>{{ open_count }}</strong> ·
+        закрыто матрицей видимости или настройками кандидата: <strong>{{ restricted_count }}</strong>.
+        Порядок: сначала амбициозные профили, затем по баллам ФСП (разделы 6.3, 9.2).</p>
+</article>
+
+{% if rows %}
+    <div class="grid">
+        {% for row in rows %}
+            {% set card = row.card %}
+            <article class="card">
+                {% include "_partial_candidate_card.html" %}
+                <div class="card-foot">
+                    <a href="/employer/candidates/{{ card.id }}" role="button"
+                       class="small {% if card.is_restricted %}secondary{% endif %}">
+                        {% if card.is_restricted %}Почему закрыт{% else %}Открыть профиль{% endif %}</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        {% if spec %}
+            По специализации «{{ specialization_title(spec) }}» анкет нет.
+            Сбросьте фильтр или создайте потребность другой специализации.
+        {% else %}
+            В банке пока нет анкет с полным профилем. Кандидаты появляются после
+            регистрации и заполнения профиля: роль в команде, формат работы,
+            специализация и согласие на обработку данных.
+        {% endif %}
+        <div class="actions">
+            <a href="/employer/bank" role="button" class="small secondary">Все специализации</a>
+            <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+        </div>
+    </div>
+{% endif %}
+
+<aside>
+    <article class="card">
+        <h3>Что вам видно</h3>
+        <p class="small"><strong>{{ tier_label }}</strong> — {{ TIER_DESCRIPTIONS.get(employer.tier, '') }}</p>
+        <ul class="chips">
+            {% for field in visible_fields %}
+                <li class="chip">{{ field }}</li>
+            {% endfor %}
+        </ul>
+        <p class="tiny muted">Ответы анкеты процессов можно изменить в любой момент —
+            состав видимых полей пересчитается сразу.</p>
+        <div class="card-foot">
+            <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+        </div>
+    </article>
+    <article class="card note-accent">
+        <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+    </article>
+</aside>
+{% endblock %}

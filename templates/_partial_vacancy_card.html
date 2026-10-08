@@ -1,0 +1,46 @@
+{# Карточка потребности (раздел 10.2). Ожидает `card` = helpers.vacancy_card(...).
+   Ссылку задаёт страница через переменную card_url, по умолчанию — кабинет кандидата. #}
+{% set link = card_url if card_url is defined else '/needs/' ~ card.id %}
+<div class="card-head">
+    <h3><a href="{{ link }}">{{ card.title }}</a></h3>
+    {% if card.is_new %}<span class="badge badge-new">новая</span>{% endif %}
+    {% if not card.open %}<span class="badge badge-hidden">скрыта</span>{% endif %}
+</div>
+
+<p class="small muted">
+    {{ card.company }} · {{ card.specialization_title }} · {{ card.grade_title }}
+</p>
+<p class="small"><strong>{{ card.salary_note }}</strong></p>
+
+<ul class="chips">
+    <li class="chip">{{ format_title(card.format) }}</li>
+    {% if card.city %}<li class="chip">{{ card.city }}</li>{% endif %}
+    {% if card.team_size %}<li class="chip">команда: {{ card.team_size }}</li>{% endif %}
+    <li class="chip">{{ card.grade_note }}</li>
+</ul>
+
+{% if card.stack %}
+    <ul class="chips">
+        {% for item in card.stack %}
+            <li class="chip">{{ item }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if card.match %}
+    {% set match = card.match %}
+    {% include "_partial_match.html" %}
+{% endif %}
+
+{% if card.company_rating is defined and card.company_rating %}
+    <details>
+        <summary class="tiny muted">Рейтинг компании: {{ card.company_rating.score }} из 10
+            ({{ card.company_rating.label }})</summary>
+        <ul class="tiny">
+            {% for line in card.company_rating.explanation %}
+                <li>{{ line }}</li>
+            {% endfor %}
+        </ul>
+        <p class="tiny muted">{{ RATING_DEMO_NOTE }}</p>
+    </details>
+{% endif %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{# Потребность работодателя + ранжированный список кандидатов (разделы 10.2, 10.3).
+   Контекст: employer, vacancy, card, rows, invited_ids, restricted_count,
+   restricted_names, tier_label (строка), visible_fields. #}
+{% block content %}
+{% set card_url = '/employer/vacancies/' ~ card.id %}
+<div class="page-head">
+    <div>
+        <h1>{{ vacancy.title }}</h1>
+        <p class="small muted">{{ vacancy.company }} ·
+            {{ specialization_title(vacancy.specialization) }} ·
+            {{ grade_title(vacancy.grade) }} ·
+            {{ salary_note(vacancy.salary_min, vacancy.salary_max) }}</p>
+    </div>
+    <div class="actions">
+        {% if vacancy.open %}
+            <span class="badge badge-sent">опубликована</span>
+        {% else %}
+            <span class="badge badge-hidden">скрыта из банка</span>
+        {% endif %}
+        <form action="/employer/vacancies/{{ vacancy.id }}/toggle" method="post">
+            <button type="submit" class="small secondary">
+                {% if vacancy.open %}Скрыть из банка{% else %}Опубликовать в банке{% endif %}
+            </button>
+        </form>
+        <a href="/employer/vacancies/new" role="button" class="small">Новая потребность</a>
+        <form action="/employer/vacancies/{{ vacancy.id }}/delete" method="post"
+              onsubmit="return confirm('Удалить потребность «{{ vacancy.title }}»?');">
+            <button type="submit" class="small secondary outline">Удалить</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div>
+        <section class="block">
+            <h2>Карточка потребности</h2>
+            <article class="card">
+                {% include "_partial_vacancy_card.html" %}
+                {% if vacancy.description %}
+                    <p class="small">{{ vacancy.description }}</p>
+                {% endif %}
+                <p class="tiny muted">Создана {{ vacancy.created_at }},
+                    обновлена {{ vacancy.updated_at }}.</p>
+            </article>
+        </section>
+
+        <section class="block">
+            <h2>Кандидаты по убыванию релевантности
+                <span class="badge badge-count">{{ rows | length }}</span>
+            </h2>
+            <p class="small muted">Порядок: специализация, стек, грейд, верификация КИТ
+                и история ФСП (веса — {{ MATCH_WEIGHTS.specialization }} /
+                {{ MATCH_WEIGHTS.stack }} / {{ MATCH_WEIGHTS.grade }} /
+                {{ MATCH_WEIGHTS.verified }} / {{ MATCH_WEIGHTS.fsp }}).</p>
+            {% for row in rows %}
+                <article class="card">
+                    {% set card = row.candidate %}
+                    {% include "_partial_candidate_card.html" %}
+                    {% set match = row.match %}
+                    {% include "_partial_match.html" %}
+
+                    {% if row.candidate_id in invited_ids %}
+                        <p class="note note-accent">
+                            <span class="badge badge-accepted">приглашение отправлено</span>
+                            Решение кандидата и вилку видно на странице «Приглашения».
+                        </p>
+                        <div class="card-foot">
+                            <a href="/employer/invitations" role="button" class="small secondary">Приглашения</a>
+                            <a href="/employer/candidates/{{ row.candidate_id }}" role="button"
+                               class="small secondary">Открыть профиль</a>
+                        </div>
+                    {% else %}
+                        <form action="/employer/vacancies/{{ vacancy.id }}/invite" method="post">
+                            <input type="hidden" name="candidate_id" value="{{ row.candidate_id }}">
+                            <label for="message-{{ row.candidate_id }}">Сообщение кандидату
+                                <textarea id="message-{{ row.candidate_id }}" name="message" rows="2"
+                                          placeholder="Приглашаем на позицию «{{ vacancy.title }}» в {{ employer.company }}: {{ salary_note(vacancy.salary_min, vacancy.salary_max) }}"></textarea>
+                            </label>
+                            <div class="actions">
+                                <button type="submit" class="small">Отправить приглашение</button>
+                                <a href="/employer/candidates/{{ row.candidate_id }}" role="button"
+                                   class="small secondary">Открыть профиль</a>
+                            </div>
+                        </form>
+                        <p class="tiny muted">Вилка в приглашении берётся из потребности:
+                            {{ salary_note(vacancy.salary_min, vacancy.salary_max) }}.</p>
+                    {% endif %}
+                </article>
+            {% else %}
+                <div class="empty">
+                    Под эту потребность пока никто не подходит: профили неполные, скрыты
+                    кандидатом или не проходят матрицу видимости для вашего уровня процессов.
+                    <div class="actions">
+                        <a href="/employer/bank" role="button" class="small">Банк кандидатов</a>
+                        <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if restricted_count %}
+                <article class="card note">
+                    <h3><span class="field-locked">Закрытые профили: {{ restricted_count }}</span></h3>
+                    <p class="small">{{ restricted_names | join(', ') }}
+                        {% if restricted_count > restricted_names | length %}
+                            и ещё {{ restricted_count - restricted_names | length }}
+                        {% endif %}</p>
+                    <p class="tiny muted">Специализация совпадает с потребностью, но доступ
+                        ограничен: кандидат скрыл анкету, его грейд не верифицирован,
+                        либо ваш уровень процессов ниже требуемого матрицей раздела 8.
+                        Вам доступны поля: {{ visible_fields | join(', ') }}.</p>
+                    <div class="card-foot">
+                        <a href="/employer/survey" role="button" class="small secondary">Пересчитать уровень</a>
+                    </div>
+                </article>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside>
+        <article class="card">
+            <h3>Правило сопоставления грейда</h3>
+            <p class="small">{{ grade_match_note(vacancy.grade, vacancy.grade_match) }}</p>
+            <p class="tiny muted">Верифицированным считается только грейд из сертификата КИТ —
+                он даёт дополнительный вес в релевантности ({{ MATCH_WEIGHTS.verified }}).</p>
+        </article>
+
+        <article class="card">
+            <h3>Ваш уровень процессов</h3>
+            <p class="small"><strong>{{ tier_label }}</strong></p>
+            <p class="tiny muted">{{ TIER_DESCRIPTIONS.get(employer.tier, '') }}</p>
+            <ul class="chips">
+                {% for field in visible_fields %}
+                    <li class="chip">{{ field }}</li>
+                {% endfor %}
+            </ul>
+            <div class="card-foot">
+                <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+            </div>
+        </article>
+
+        <article class="card">
+            <h3>Отклики и приглашения</h3>
+            <ul class="small">
+                <li><a href="/employer/applications">Отклики кандидатов</a> — статус виден
+                    кандидату сразу после вашего решения.</li>
+                <li><a href="/employer/invitations">Отправленные приглашения</a> — вилка,
+                    сообщение и решение кандидата.</li>
+                <li><a href="/employer/bank">Банк кандидатов</a> — поиск без привязки
+                    к потребности.</li>
+            </ul>
+        </article>
+
+        <article class="card note-accent">
+            <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}
+

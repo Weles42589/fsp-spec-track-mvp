@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{# Отправленные приглашения (разделы 11.13, 8.3): вилка, сообщение, решение кандидата;
+   контакты раскрываются только после принятия приглашения.
+   Контекст: employer, rows, invited_count, accepted_count, rejected_count. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Отправленные приглашения</h1>
+        <p class="small muted">Кандидат видит вилку и сообщение, а контакты становятся
+            доступны вам только после того, как он принял приглашение.</p>
+    </div>
+    <div class="actions">
+        <span class="badge badge-count">отправлено: {{ rows | length }}</span>
+        <span class="badge badge-accepted">принято: {{ accepted_count }}</span>
+        <span class="badge badge-rejected">отклонено: {{ rejected_count }}</span>
+        <a href="/employer/bank" role="button" class="small secondary">Банк кандидатов</a>
+    </div>
+</div>
+
+{% if rows %}
+    <article class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Кандидат</th>
+                    <th>Потребность</th>
+                    <th>Вилка</th>
+                    <th>Статус</th>
+                    <th>Контакты</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td><a href="/employer/candidates/{{ row.candidate.id }}">
+                            {{ row.candidate.profile.name }}</a></td>
+                        <td><a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a></td>
+                        <td>{{ salary_note(row.invitation.salary_min, row.invitation.salary_max) }}</td>
+                        <td><span class="badge badge-{{ row.invitation.status }}">
+                            {{ status_title(row.invitation.status) }}</span></td>
+                        <td>
+                            {% if row.invitation.status == 'accepted' %}
+                                {{ row.candidate.profile.real_name }} ·
+                                {{ row.candidate.profile.email }}
+                                {% if row.candidate.profile.city %} · {{ row.candidate.profile.city }}{% endif %}
+                            {% else %}
+                                <span class="field-locked">скроют до принятия приглашения</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <div class="grid">
+        {% for row in rows %}
+            <article class="card">
+                <div class="card-head">
+                    <h3><a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a></h3>
+                    <span class="badge badge-{{ row.invitation.status }}">
+                        {{ status_title(row.invitation.status) }}</span>
+                </div>
+                <dl class="kv">
+                    <dt>Кандидат</dt>
+                    <dd><a href="/employer/candidates/{{ row.candidate.id }}">
+                        {{ row.candidate.profile.name }}</a>
+                        <span class="tiny muted">{{ row.candidate.specialization_title }}</span></dd>
+                    <dt>Вилка в приглашении</dt>
+                    <dd>{{ salary_note(row.invitation.salary_min, row.invitation.salary_max) }}</dd>
+                    <dt>Отправлено</dt>
+                    <dd>{{ row.invitation.created_at }}</dd>
+                    <dt>Обновлено</dt>
+                    <dd>{{ row.invitation.updated_at }}</dd>
+                </dl>
+                <p class="small muted">Сообщение кандидату:</p>
+                <p class="small">«{{ row.invitation.message }}»</p>
+
+                {% if row.invitation.status == 'accepted' %}
+                    <div class="flash flash-success">
+                        Приглашение принято: {{ row.candidate.profile.real_name }} ·
+                        {{ row.candidate.profile.email }}{% if row.candidate.profile.city %} ·
+                        {{ row.candidate.profile.city }}{% endif %}
+                    </div>
+                {% elif row.invitation.status == 'rejected' %}
+                    <p class="note">Кандидат отклонил приглашение. Повторная отправка
+                        по этой же потребности создаст новое приглашение — учитывайте
+                        историю при ранжировании (раздел 6.6).</p>
+                {% else %}
+                    <p class="tiny muted">Приглашение отправлено, решение ещё не принято.
+                        Статус «ожидание» виден обеим сторонам.</p>
+                {% endif %}
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        Приглашений пока нет. Основная механика платформы: работодатель находит кандидата
+        в банке или в подборе по потребности и отправляет приглашение с вилкой.
+        <div class="actions">
+            <a href="/employer/bank" role="button" class="small">Банк кандидатов</a>
+            <a href="/employer" role="button" class="small secondary">Кабинет</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

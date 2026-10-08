@@ -1,0 +1,33 @@
+{# Анкета работодателя из шести нейтральных вопросов (разделы 7.1, 14).
+   Используется на шаге 2 регистрации и в кабинете. Ожидает `answers` и `errors`. #}
+{% if errors %}
+    <div class="errors" role="alert">
+        <strong>Анкета не сохранена:</strong>
+        <ul>
+            {% for item in errors %}
+                <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<p class="note">Вопросы одинаковы для всех организаций. Ответы определяют уровень
+    организации процессов, а он — какие поля кандидатов вам доступны.
+    Вариант ответа не показывает «правильность»: важно, как у вас действительно.</p>
+
+{% for item in EMPLOYER_SURVEY %}
+    {% set current = answers.get(item.field) %}
+    <fieldset>
+        <legend>{{ loop.index }}. {{ item.question }}</legend>
+        <label for="{{ item.field }}-true">
+            <input type="radio" id="{{ item.field }}-true" name="{{ item.field }}" value="true"
+                   {% if current == true or current == 'true' %}checked{% endif %} required>
+            {{ item.true_label | capitalize }}
+        </label>
+        <label for="{{ item.field }}-false">
+            <input type="radio" id="{{ item.field }}-false" name="{{ item.field }}" value="false"
+                   {% if current == false or current == 'false' %}checked{% endif %}>
+            {{ item.false_label | capitalize }}
+        </label>
+    </fieldset>
+{% endfor %}

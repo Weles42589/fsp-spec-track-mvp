@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{# Кабинет работодателя (разделы 10.2–10.4, 13.6): уровень процессов, потребности
+   с подбором кандидатов, новые отклики и отправленные приглашения. #}
+{% block content %}
+<div class="hero">
+    <div class="page-head">
+        <div>
+            <h1>{{ employer.company }}</h1>
+            <p class="small muted">
+                {{ employer.contact_name or employer.email }}
+                {% if employer.position %} · {{ employer.position }}{% endif %}
+                {% if employer.city %} · {{ employer.city }}{% endif %}
+            </p>
+        </div>
+        <div class="actions">
+            <span class="badge badge-count">{{ tier_label }}</span>
+            <span class="tier-dots" aria-hidden="true">
+                {% for dot in [1, 2, 3] %}<i class="{% if dot <= employer.tier %}on{% endif %}"></i>{% endfor %}
+            </span>
+            <a href="/employer/vacancies/new" role="button" class="small">Новая потребность</a>
+            <a href="/employer/bank" role="button" class="small secondary">Банк кандидатов</a>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div><strong>{{ vacancies | length }}</strong><span>потребностей</span></div>
+        <div><strong>{{ applications_total }}</strong><span>откликов всего</span></div>
+        <div><strong>{{ new_applications }}</strong><span>новых откликов</span></div>
+        <div><strong>{{ invitations | length }}</strong><span>приглашений</span></div>
+        <div><strong>{{ bank_total }}</strong><span>анкет в банке</span></div>
+    </div>
+
+    <p class="tiny muted">{{ tier_description }} Вам видны поля: {{ visible_fields | join(', ') }}.
+        {{ CONTACT_REVEAL_NOTE }}.</p>
+</div>
+
+<div class="grid-2">
+    <div>
+        <section class="block">
+            <h2>Потребности и подбор</h2>
+            {% if matches %}
+                {% for row in matches %}
+                    <article class="card">
+                        <div class="card-head">
+                            <h3><a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a></h3>
+                            {% if row.vacancy.open %}
+                                <span class="badge badge-sent">в банке потребностей</span>
+                            {% else %}
+                                <span class="badge badge-hidden">скрыта из банка</span>
+                            {% endif %}
+                        </div>
+                        <p class="small muted">
+                            {{ specialization_title(row.vacancy.specialization) }} ·
+                            {{ grade_title(row.vacancy.grade) }} ·
+                            {{ salary_note(row.vacancy.salary_min, row.vacancy.salary_max) }}
+                        </p>
+                        <p class="tiny muted">{{ grade_match_note(row.vacancy.grade, row.vacancy.grade_match) }}</p>
+                        {% if row['items'] %}
+                            <p class="small">Подходит кандидатов: <strong>{{ row.open_count }}</strong>.
+                                Первые три — по убыванию релевантности:</p>
+                            {% for item in row['items'][:3] %}
+                                <article>
+                                    {% set card = item.candidate %}
+                                    {% include "_partial_candidate_card.html" %}
+                                    {% set match = item.match %}
+                                    {% include "_partial_match.html" %}
+                                    <form action="/employer/vacancies/{{ row.vacancy.id }}/invite" method="post">
+                                        <input type="hidden" name="candidate_id" value="{{ item.candidate_id }}">
+                                        <div class="actions">
+                                            <button type="submit" class="small">Пригласить</button>
+                                            <a href="/employer/candidates/{{ item.candidate_id }}" role="button"
+                                               class="small secondary">Открыть профиль</a>
+                                        </div>
+                                    </form>
+                                </article>
+                            {% endfor %}
+                            <div class="card-foot">
+                                <a href="/employer/vacancies/{{ row.vacancy.id }}" role="button"
+                                   class="small secondary">Весь список ({{ row.open_count }})</a>
+                            </div>
+                        {% else %}
+                            <p class="small muted">Подходящих профилей пока нет: проверьте грейд,
+                                формат и стек потребности или откройте анкеты в банке кандидатов.</p>
+                            <div class="card-foot">
+                                <a href="/employer/vacancies/{{ row.vacancy.id }}" role="button"
+                                   class="small secondary">Открыть потребность</a>
+                            </div>
+                        {% endif %}
+
+                        {% if row.restricted_count %}
+                            <p class="note">
+                                <span class="field-locked">закрытые профили: {{ row.restricted_count }}</span>
+                                {{ row.restricted_names | join(', ') }} — доступ зависит от анкеты
+                                организации процессов (раздел 8).
+                            </p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty">
+                    Потребностей пока нет. Опишите первую — платформа сразу подберёт
+                    амбициозных кандидатов по специализации, стеку, грейду, верификации
+                    КИТ и истории ФСП.
+                    <div class="actions">
+                        <a href="/employer/vacancies/new" role="button" class="small">Создать потребность</a>
+                    </div>
+                </div>
+            {% endif %}
+        <section class="block">
+            <h2>Отклики кандидатов
+                {% if new_applications %}<span class="badge badge-new">новых: {{ new_applications }}</span>{% endif %}
+            </h2>
+            {% if applications %}
+                <article>
+                    <table class="compact">
+                        <thead>
+                            <tr>
+                                <th>Кандидат</th>
+                                <th>Потребность</th>
+                                <th>Релевантность</th>
+                                <th>Статус</th>
+                                <th>Решение</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in applications %}
+                                <tr>
+                                    <td>
+                                        {{ row.candidate.profile.name }}
+                                        <span class="tiny muted">{{ row.candidate.specialization_title }}</span>
+                                        {% if row.application.is_new %}<span class="badge badge-new">новый</span>{% endif %}
+                                    </td>
+                                    <td><a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a></td>
+                                    <td><span class="badge badge-count">{{ row.match.score }}%</span></td>
+                                    <td><span class="badge badge-{{ row.application.status }}">
+                                        {{ status_title(row.application.status) }}</span></td>
+                                    <td>
+                                        <form action="/employer/applications/{{ row.application.id }}/status" method="post">
+                                            <div class="actions">
+                                                <button type="submit" name="status" value="accepted"
+                                                        class="small">Принять</button>
+                                                <button type="submit" name="status" value="rejected"
+                                                        class="small secondary">Отклонить</button>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="card-foot">
+                        <a href="/employer/applications" role="button" class="small secondary">
+                            Все отклики ({{ applications_total }})</a>
+                    </div>
+                </article>
+            {% else %}
+                <div class="empty">Откликов пока нет. Опубликуйте потребность — кандидаты
+                    видят её в банке потребностей и откликаются со своим профилем.</div>
+            {% endif %}
+        </section>
+    </div>
+
+        </section>
+    <aside>
+        <article class="card">
+            <h3>Уровень организации процессов</h3>
+            <p class="small"><strong>{{ tier_label }}</strong></p>
+            <p class="tiny muted">{{ tier_description }}</p>
+            <ul class="chips">
+                {% for field in visible_fields %}
+                    <li class="chip">{{ field }}</li>
+                {% endfor %}
+            </ul>
+            <div class="card-foot">
+                <a href="/employer/survey" role="button" class="small secondary">Изменить анкету</a>
+            </div>
+        </article>
+
+        <article class="card">
+            <div class="card-head">
+                <h3>Отправленные приглашения</h3>
+                <span class="badge badge-count">{{ invitations | length }}</span>
+            </div>
+            {% if invitations %}
+                {% set accepted = invitations | selectattr('invitation.status', 'equalto', 'accepted') | list %}
+                {% set rejected = invitations | selectattr('invitation.status', 'equalto', 'rejected') | list %}
+                <p class="tiny muted">Принято: {{ accepted | length }} ·
+                    отклонено: {{ rejected | length }} ·
+                    ждут решения: {{ invitations | length - accepted | length - rejected | length }}</p>
+                <ul class="small">
+                    {% for row in invitations[:4] %}
+                        <li>{{ row.candidate.profile.name }} —
+                            <a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a>
+                            <span class="badge badge-{{ row.invitation.status }}">
+                                {{ status_title(row.invitation.status) }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small muted">Приглашений ещё не было. Основная механика платформы:
+                    работодатель находит кандидата и отправляет приглашение с вилкой,
+                    а кандидат решает, принимать ли его.</p>
+            {% endif %}
+            <div class="card-foot">
+                <a href="/employer/invitations" role="button" class="small secondary">Все приглашения</a>
+            </div>
+        </article>
+
+        <article class="card">
+            <h3>Банк кандидатов</h3>
+            <p class="small">Анкет с полным профилем: <strong>{{ bank_total }}</strong>.
+                Список анонимный: ФИО и контакты раскрываются только после того,
+                как кандидат принял приглашение.</p>
+            <div class="card-foot">
+                <a href="/employer/bank" role="button" class="small">Открыть банк</a>
+            </div>
+        </article>
+
+        <article class="card note-accent">
+            <h3>Как считается релевантность</h3>
+            <ul class="tiny">
+                <li>специализация — вес {{ MATCH_WEIGHTS.specialization }}</li>
+                <li>стек — вес {{ MATCH_WEIGHTS.stack }}</li>
+                <li>грейд — вес {{ MATCH_WEIGHTS.grade }}</li>
+                <li>верификация грейда КИТ — вес {{ MATCH_WEIGHTS.verified }}</li>
+                <li>история ФСП — вес {{ MATCH_WEIGHTS.fsp }}</li>
+            </ul>
+            <p class="tiny muted">Порядок внутри равных оценок: сначала верифицированные
+                с высоким баллом КИТ, затем по истории ФСП (раздел 6.6).</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}
+
+

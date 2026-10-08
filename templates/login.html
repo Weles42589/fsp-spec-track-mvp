@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{# Вход и начало регистрации (раздел 12.1): email + роль, паролей нет. #}
+{% block content %}
+<div class="grid-2">
+    <article>
+        <h1>Вход на платформу</h1>
+        <p class="small muted">Паролей нет: указывайте email — пришлём код подтверждения.
+            Если аккаунта ещё нет, тот же поток начнёт регистрацию.</p>
+
+        {% if error %}
+            <div class="flash flash-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form action="/login" method="post">
+            <fieldset>
+                <legend>Кто вы?</legend>
+                {% for code, label in role_titles.items() %}
+                    <label for="role-{{ code }}">
+                        <input type="radio" id="role-{{ code }}" name="role" value="{{ code }}"
+                               {% if role == code %}checked{% endif %}>
+                        {{ label | capitalize }}
+                    </label>
+                {% endfor %}
+            </fieldset>
+
+            <label for="email">Email
+                <input type="email" id="email" name="email" value="{{ email or '' }}"
+                       placeholder="ivanov@fsp.demo" required autocomplete="email">
+            </label>
+
+            <button type="submit">Получить код подтверждения</button>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Демо-вход</h3>
+            <p class="small">В MVP код подтверждения показывается прямо на странице —
+                SMTP не подключён.</p>
+            <p class="tiny muted">{{ AUTH_DEMO_NOTE }}</p>
+            <hr>
+            <p class="small">Учётные записи демо-стенда (сид заполняет ими пустую базу):</p>
+            <ul class="demo-accounts">
+                {% for account in demo_accounts() %}
+                    <li>
+                        <code>{{ account.email }}</code>
+                        <span class="tiny muted">{{ account.name }} — {{ account.note }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="tiny muted">Любой другой email тоже работает — это сценарий
+                «история в реестре ФСП не найдена».</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

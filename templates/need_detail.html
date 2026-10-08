@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{# Потребность подробно + отклик кандидата (разделы 10.2, 10.5, 14). #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>{{ card.title }}</h1>
+        <p class="small muted">{{ card.company }}{% if employer %} · {{ employer.city }}{% endif %}</p>
+    </div>
+    <a href="/needs" role="button" class="small secondary">К банку потребностей</a>
+</div>
+
+<div class="grid-2">
+    <article class="card">
+        <p class="small muted">{{ card.specialization_title }} · {{ card.grade_title }} ·
+            {{ card.salary_note }}</p>
+        <ul class="chips">
+            <li class="chip">{{ format_title(card.format) }}</li>
+            {% if card.city %}<li class="chip">{{ card.city }}</li>{% endif %}
+            {% if card.team_size %}<li class="chip">команда: {{ card.team_size }}</li>{% endif %}
+            <li class="chip">{{ card.grade_note }}</li>
+            {% if card.is_new %}<li class="chip chip-accent">новая потребность</li>{% endif %}
+        </ul>
+
+        {% if card.description %}
+            <p class="small">{{ card.description }}</p>
+        {% endif %}
+
+        {% if card.stack %}
+            <p class="small muted">Стек:</p>
+            <ul class="chips">
+                {% for item in card.stack %}
+                    <li class="chip">{{ item }}</li>
+                {% endfor %}
+            </ul>
+            <p class="tiny muted">{{ card.stack_note }}</p>
+        {% endif %}
+
+        {% set match = match %}
+        {% include "_partial_match.html" %}
+        {% if card.company_rating %}
+            <details>
+                <summary class="tiny muted">Рейтинг компании: {{ card.company_rating.score }} из 10
+                    ({{ card.company_rating.label }})</summary>
+                <ul class="tiny">
+                    {% for line in card.company_rating.explanation %}
+                        <li>{{ line }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="tiny muted">{{ RATING_DEMO_NOTE }}</p>
+            </details>
+        {% endif %}
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Отклик</h3>
+            {% if application %}
+                <div class="flash flash-success" role="status">
+                    Отклик отправлен {{ application.created_at }}.
+                    Статус: <span class="badge badge-{{ application.status }}">
+                        {{ status_title(application.status) }}</span>
+                </div>
+                {% if application.message %}
+                    <p class="small muted">Ваше сообщение:</p>
+                    <p class="small">{{ application.message }}</p>
+                {% endif %}
+                <p class="tiny muted">Работодатель видит отклик в своём кабинете и может
+                    прислать приглашение. После вашего согласия на приглашение ему
+                    открываются ФИО и контакты.</p>
+            {% elif not profile_complete %}
+                <div class="flash flash-error" role="alert">
+                    Профиль заполнен не полностью — откликнуться нельзя.
+                </div>
+                <div class="actions">
+                    <a href="/candidate/edit" role="button" class="small">Заполнить анкету</a>
+                </div>
+            {% else %}
+                <form action="/needs/{{ card.id }}/apply" method="post">
+                    <label for="message">Сообщение работодателю
+                        <textarea id="message" name="message" rows="5"
+                                  placeholder="Коротко: чем интересна задача и что в стеке совпадает"></textarea>
+                    </label>
+                    <div class="actions">
+                        <button type="submit">Откликнуться</button>
+                    </div>
+                </form>
+                <p class="tiny muted">Отклик не раскрывает ваши контакты: сначала статус,
+                    потом приглашение и ваше согласие.</p>
+            {% endif %}
+        </article>
+
+        <article class="card">
+            <h3>Ваш профиль в этой паре</h3>
+            <dl class="kv">
+                <dt>Специализация</dt><dd>{{ specialization_title(candidate.specialization) }}</dd>
+                <dt>Грейд</dt><dd>{{ grade_title(candidate.grade) }}</dd>
+                <dt>Формат</dt><dd>{{ WORK_FORMATS.get(candidate.work_format, '—') }}</dd>
+                <dt>Город</dt><dd>{{ candidate.city or '—' }}</dd>
+            </dl>
+            <div class="card-foot">
+                <a href="/candidate/edit" role="button" class="small secondary">Изменить анкету</a>
+            </div>
+        </article>
+    </aside>
+</div>
+{% endblock %}

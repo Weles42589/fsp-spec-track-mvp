@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{# Кабинет кандидата (раздел 13.3): профиль, ФСП, КИТ, видимость, приглашения, отклики. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Кабинет кандидата</h1>
+        <p class="small muted">{{ candidate.name }} · {{ candidate.email }}</p>
+    </div>
+    <div class="actions">
+        <span class="badge {% if full.profile_complete %}badge-accepted{% else %}badge-viewed{% endif %}">
+            профиль {{ full.profile_level }}</span>
+        {% if full.is_ambitious %}<span class="badge badge-new">амбициозный профиль</span>{% endif %}
+        <a href="/candidate/edit" role="button" class="small secondary">Изменить анкету</a>
+    </div>
+</div>
+
+{% if not full.profile_complete %}
+    <div class="flash flash-error" role="alert">
+        Профиль заполнен не полностью — вы не участвуете в подборе и не видны в банке.
+        Добавьте роль в команде, формат работы, специализацию и согласие на обработку данных.
+    </div>
+{% endif %}
+
+<div class="grid-2">
+    <div>
+        <section class="block">
+            <h2>Профиль</h2>
+            <article class="card">
+                <dl class="kv">
+                    <dt>Специализация</dt>
+                    <dd>{{ full.profile.specialization_title }}
+                        <span class="tiny muted">({{ full.specialization_source_label }})</span></dd>
+                    <dt>Грейд</dt>
+                    <dd>{{ full.grade_title }}
+                        <span class="tiny muted">{{ full.grade_note }}</span></dd>
+                    <dt>Роль в команде</dt>
+                    <dd>{{ candidate.team_role | capitalize if candidate.team_role else '—' }}</dd>
+                    <dt>Формат работы</dt>
+                    <dd>{{ WORK_FORMATS.get(candidate.work_format, '—') }}</dd>
+                    <dt>Город</dt>
+                    <dd>{{ candidate.city or '—' }}</dd>
+                    <dt>Роль в ФСП</dt>
+                    <dd>{{ candidate.fsp_role | capitalize if candidate.fsp_role else '—' }}</dd>
+                </dl>
+
+                {% if full.profile.stack %}
+                    <p class="small muted">Стек:</p>
+                    <ul class="chips">
+                        {% for item in full.profile.stack %}
+                            <li class="chip">{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <p class="small">{{ full.ambitions_note }}</p>
+                {% if full.ambitions_labels %}
+                    <ul class="chips">
+                        {% for label in full.ambitions_labels %}
+                            <li class="chip chip-accent">{{ label }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <p class="tiny muted">Флагов: {{ full.ambitions_flags }} из 4, порог — 2.</p>
+
+                {% if full.red_flags %}
+                    <p class="note"><strong>На что обратить внимание:</strong></p>
+                    <ul class="tiny">
+                        {% for flag in full.red_flags %}
+                            <li>{{ flag }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </article>
+        </section>
+
+        <section class="block">
+            <h2>История ФСП</h2>
+            <article class="card">
+                {% if fsp.connected %}
+                    <div class="card-head">
+                        <h3>{{ fsp.score }} баллов · категория {{ fsp.category }}</h3>
+                        <span class="badge badge-accepted">подключено</span>
+                    </div>
+                    <p class="small">{{ fsp.category_title }}</p>
+                {% else %}
+                    <div class="card-head">
+                        <h3>ФСП не подключён</h3>
+                        <span class="badge badge-hidden">0 баллов · категория D</span>
+                    </div>
+                {% endif %}
+
+                {% if fsp.achievements %}
+                    <table class="compact">
+                        <thead>
+                            <tr>
+                                <th>Дисциплина</th><th>Соревнование</th>
+                                <th>Место</th><th>Роль</th><th>Баллы</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in fsp.achievements %}
+                                <tr>
+                                    <td>{{ item.discipline }}</td>
+                                    <td>{{ item.competition }}</td>
+                                    <td>{{ place_text(item.place) }}</td>
+                                    <td>{{ item.role or '—' }}</td>
+                                    <td>{{ item.points }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if fsp.disciplines %}
+                        <p class="tiny muted">Дисциплины: {{ fsp.disciplines | join(', ') }}.
+                            Лучшая роль: {{ fsp.best_role or 'не определена' }}.</p>
+                    {% endif %}
+                {% endif %}
+
+                <div class="card-foot">
+                    {% if fsp.connected %}
+                        <form action="/candidate/fsp/disconnect" method="post">
+                            <button type="submit" class="small secondary">Отключить историю ФСП</button>
+                        </form>
+                    {% else %}
+                        <form action="/candidate/fsp/connect" method="post">
+                            <button type="submit" class="small">Подключить историю ФСП</button>
+                        </form>
+                    {% endif %}
+                </div>
+                <p class="tiny muted">{{ FSP_DEMO_NOTE }}</p>
+            </article>
+        </section>
+
+        <section class="block">
+            <h2>Сертификат КИТ</h2>
+            <article class="card">
+                {% if kit.connected %}
+                    <div class="card-head">
+                        <h3>{{ kit.competition or 'Сертификат загружен' }}</h3>
+                        <span class="badge badge-accepted">верифицировано</span>
+                    </div>
+                    <dl class="kv">
+                        <dt>Номер</dt><dd>{{ kit.certificate_number or '—' }}</dd>
+                        <dt>Место</dt><dd>{{ place_text(kit.place) }}</dd>
+                        <dt>Состав команды</dt>
+                        <dd>{{ kit.team | join(', ') if kit.team else '—' }}</dd>
+                        <dt>Грейд</dt>
+                        <dd>{{ grade_title(kit.grade) }} — {{ kit.grade_note }}</dd>
+                    </dl>
+                    <div class="card-foot">
+                        <form action="/candidate/kit/remove" method="post">
+                            <button type="submit" class="small secondary">Удалить сертификат</button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p class="small">Сертификат не загружен: грейд
+                        {{ grade_title(kit.grade) }} считается по барометру амбиций
+                        и не верифицирован.</p>
+                {% endif %}
+
+                <form action="/candidate/kit" method="post" enctype="multipart/form-data">
+                    <label for="kit_file">Загрузить сертификат (PDF или TXT)
+                        <input type="file" id="kit_file" name="kit_file" accept=".pdf,.txt">
+                    </label>
+                    <div class="actions">
+                        <button type="submit" class="small">Разобрать сертификат</button>
+                    </div>
+                </form>
+            </article>
+        </section>
+    </div>
+
+    <aside>
+        <article class="card{% if new_invitations %} is-new{% endif %}">
+            <div class="card-head">
+                <h3>Приглашения</h3>
+                {% if new_invitations %}<span class="badge badge-new">новых: {{ new_invitations }}</span>{% endif %}
+            </div>
+            {% if invitations %}
+                <ul class="small">
+                    {% for row in invitations[:4] %}
+                        <li>
+                            <a href="/candidate/invitations/{{ row.invitation.id }}">
+                                {{ row.vacancy.title }}</a>
+                            — {{ row.vacancy.company }},
+                            <span class="badge badge-{{ row.invitation.status }}">
+                                {{ status_title(row.invitation.status) }}</span>
+                            <span class="tiny muted">релевантность {{ row.match.score }}%</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="small muted">Приглашений пока нет. Заполните профиль и держите его
+                    открытым — работодатели находят кандидатов в банке и по потребностям.</p>
+            {% endif %}
+            <div class="card-foot">
+                <a href="/candidate/invitations" role="button" class="small">Все приглашения</a>
+            </div>
+        </article>
+
+        <article class="card">
+            <h3>Потребности работодателей</h3>
+            <p class="small">В банке {{ needs_count }} открытых потребностей. Список отсортирован
+                по релевантности вашему профилю: специализация, стек, грейд, верификация
+                и история ФСП.</p>
+            <div class="card-foot">
+                <a href="/needs" role="button" class="small">Банк потребностей</a>
+                <a href="/candidate/applications" role="button" class="small secondary">
+                    Мои отклики ({{ applications | length }})</a>
+            </div>
+        </article>
+
+        <article class="card">
+            <h3>Видимость профиля</h3>
+            <p class="small">
+                {% if candidate.visible_in_bank %}
+                    Профиль в банке: вас видят работодатели, которым доступ разрешён
+                    матрицей раздела 8.
+                {% else %}
+                    Профиль скрыт: он не участвует в подборе и не отображается
+                    в банке кандидатов.
+                {% endif %}
+            </p>
+            <form action="/candidate/visibility" method="post">
+                <label for="visible_in_bank">
+                    <input type="checkbox" id="visible_in_bank" name="visible_in_bank"
+                           {% if candidate.visible_in_bank %}checked{% endif %}>
+                    Показывать мой профиль в банке кандидатов
+                </label>
+                <div class="actions">
+                    <button type="submit" class="small">Сохранить видимость</button>
+                </div>
+            </form>
+            <p class="tiny muted">{{ CONTACT_REVEAL_NOTE }}</p>
+        </article>
+
+        <article class="card">
+            <h3>Кому какие поля видны</h3>
+            <dl class="kv">
+                {% for tier in [3, 2, 1] %}
+                    <dt>{{ tier_title(tier) }}</dt>
+                    <dd class="tiny">{{ TIER_DESCRIPTIONS[tier] }}</dd>
+                {% endfor %}
+            </dl>
+            <p class="tiny muted">Цифра уровня работодателя не раскрывается — видно только,
+                какие поля он может открыть. ФИО и контакты доступны работодателю после
+                вашего согласия.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

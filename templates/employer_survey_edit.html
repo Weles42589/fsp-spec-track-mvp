@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{# Кабинет работодателя: изменение анкеты процессов (раздел 14). #}
+{% block content %}
+<div class="page-head">
+    <h1>Анкета организации процессов</h1>
+    <p class="small muted">Уровень: <strong>{{ tier_label }}</strong>
+        <span class="tier-dots" aria-hidden="true">
+            {% for dot in [1, 2, 3] %}<i class="{% if dot <= employer.tier %}on{% endif %}"></i>{% endfor %}
+        </span></p>
+</div>
+
+<div class="grid-2">
+    <article>
+        <p class="small muted">Компания: <strong>{{ employer.company }}</strong>.
+            Ответы можно менять в любой момент — уровень процессов и состав видимых
+            полей кандидатов пересчитываются сразу после сохранения.</p>
+
+        <form action="/employer/survey" method="post">
+            {% include "_partial_survey_form.html" %}
+            <div class="actions">
+                <button type="submit">Пересчитать уровень и видимость</button>
+                <a href="/employer" role="button" class="secondary">Отмена</a>
+            </div>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Сейчас доступно</h3>
+            <p class="small">{{ TIER_DESCRIPTIONS.get(employer.tier, '') }}</p>
+            <ul class="chips">
+                {% for field in TIER_FIELDS.get(employer.tier, []) %}
+                    <li class="chip">{{ field }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+        <article class="card">
+            <h3>Матрица видимости</h3>
+            <dl class="kv">
+                {% for tier in [3, 2, 1] %}
+                    <dt>{{ tier_title(tier) }}</dt>
+                    <dd class="tiny">{{ TIER_DESCRIPTIONS[tier] }}</dd>
+                {% endfor %}
+            </dl>
+            <p class="tiny muted">Кандидатам цифра уровня не раскрывается — только состав
+                доступных полей и причина, если профиль закрыт.</p>
+        </article>
+        <article class="card note-accent">
+            <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

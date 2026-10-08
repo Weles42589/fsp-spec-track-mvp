@@ -1,0 +1,24 @@
+{# Шкала релевантности и объяснение оценки (раздел 10.3). Ожидает переменную `match`. #}
+{% if match %}
+    <div class="match" title="{{ match.summary }}">
+        <div class="match-bar" role="img" aria-label="Релевантность {{ match.score }} из 100">
+            <span style="width: {{ match.score }}%"></span>
+        </div>
+        <span class="match-score">{{ match.score }}%</span>
+    </div>
+    <details>
+        <summary class="tiny muted">Почему {{ match.score }}% — раскрыть критерии</summary>
+        <ul class="tiny">
+            {% for reason in match.reasons %}
+                <li>{{ reason }}</li>
+            {% endfor %}
+        </ul>
+        <p class="tiny muted">Совпало элементов стека: {{ match.stack_matched }}
+            из {{ match.stack_total }}. Веса критериев:
+            специализация {{ MATCH_WEIGHTS.specialization }},
+            стек {{ MATCH_WEIGHTS.stack }},
+            грейд {{ MATCH_WEIGHTS.grade }},
+            верификация грейда {{ MATCH_WEIGHTS.verified }},
+            история ФСП {{ MATCH_WEIGHTS.fsp }}.</p>
+    </details>
+{% endif %}

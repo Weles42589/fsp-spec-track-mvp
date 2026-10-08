@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{# Шаг 3 регистрации кандидата: сертификат КИТ (раздел 6.2). Грейд из сертификата приоритетен. #}
+{% block content %}
+<ol class="steps">
+    {% for item in steps %}
+        <li class="{% if loop.index == step %}current{% elif loop.index < step %}done{% endif %}">{{ item }}</li>
+    {% endfor %}
+</ol>
+
+<div class="grid-2">
+    <article>
+        <h1>Сертификат КИТ</h1>
+        <p class="small">Загрузите сертификат чемпионата «Кадры будущего» / КИТ — PDF или его
+            текстовую копию. Данные сертификата подтверждают грейд и место.</p>
+
+        {% if errors %}
+            <div class="errors" role="alert">
+                <strong>Сертификат не принят:</strong>
+                <ul>
+                    {% for item in errors %}
+                        <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if kit.connected %}
+            <div class="flash flash-success" role="status">Сертификат уже загружен.</div>
+            <dl class="kv">
+                <dt>Номер</dt><dd>{{ kit.certificate_number or '—' }}</dd>
+                <dt>Соревнование</dt><dd>{{ kit.competition or '—' }}</dd>
+                <dt>Место</dt><dd>{{ place_text(kit.place) }}</dd>
+                <dt>Состав команды</dt><dd>{{ kit.team | join(', ') if kit.team else '—' }}</dd>
+                <dt>Грейд из сертификата</dt><dd>{{ grade_title(kit.grade_from_certificate) }}</dd>
+                <dt>Итоговый грейд</dt><dd>{{ grade_title(kit.grade) }} — {{ kit.grade_note }}</dd>
+            </dl>
+        {% endif %}
+
+        <form action="/register/candidate/kit" method="post" enctype="multipart/form-data">
+            <label for="kit_file">Файл сертификата (PDF или TXT)
+                <input type="file" id="kit_file" name="kit_file" accept=".pdf,.txt">
+            </label>
+            <div class="actions">
+                <button type="submit">Загрузить и разобрать сертификат</button>
+                <button type="submit" name="action" value="skip" class="secondary">
+                    Пропустить — добавлю позже
+                </button>
+            </div>
+        </form>
+        <p class="tiny muted">Сертификат можно загрузить позже в кабинете кандидата.</p>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Что распознаём</h3>
+            <ul class="tiny">
+                <li>номер сертификата и название соревнования;</li>
+                <li>место (1–3 и участие) и состав команды;</li>
+                <li>грейд — имеет высший приоритет над барометром;</li>
+                <li>специализация, если в анкете она не выбрана вручную.</li>
+            </ul>
+            <p class="tiny muted">Разбор PDF выполняется локально (pdfplumber),
+                файл никуда не отправляется.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

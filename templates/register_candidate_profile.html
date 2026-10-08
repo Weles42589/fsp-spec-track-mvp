@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{# Шаг 1 регистрации кандидата: профиль и барометр амбиций (разделы 6.3, 7.2). #}
+{% block content %}
+<ol class="steps">
+    {% for item in steps %}
+        <li class="{% if loop.index == step %}current{% elif loop.index < step %}done{% endif %}">{{ item }}</li>
+    {% endfor %}
+</ol>
+
+<div class="grid-2">
+    <article>
+        <h1>Анкета кандидата</h1>
+        <p class="small muted">Email: <strong>{{ email }}</strong>. Поля со звёздочкой обязательны —
+            без них профиль не попадёт в банк кандидатов.</p>
+
+        <form action="/register/candidate" method="post">
+            {% include "_partial_profile_form.html" %}
+            <div class="actions">
+                <button type="submit">Сохранить и перейти к истории ФСП</button>
+            </div>
+        </form>
+    </article>
+
+    <aside>
+        <article class="card">
+            <h3>Как считается амбициозность</h3>
+            <p class="small">Четыре флага, порог — два. Вычисленные флаги добавляются
+                автоматически, отмеченные вручную учитываются так же.</p>
+            <ul class="tiny">
+                {% for label in AMBITIONS.values() %}
+                    <li>{{ label }}</li>
+                {% endfor %}
+            </ul>
+            <p class="tiny muted">Амбициозный профиль влияет на грейд, порядок в банке
+                и на то, каким работодателям вы видны (матрица раздела 8).</p>
+        </article>
+        <article class="card">
+            <h3>Специализация и грейд</h3>
+            <p class="small">Если специализацию не выбрать, система определит её по стеку,
+                дисциплинам ФСП и сертификату КИТ. Грейд берётся из сертификата КИТ,
+                иначе — из барометра, иначе — junior.</p>
+            <p class="tiny muted">{{ FSP_DEMO_NOTE }}</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

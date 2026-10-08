@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{# Отклики кандидатов (раздел 11.14): статусы новых/принятых/отклонённых.
+   Контекст: employer, rows, new_count, accepted_count, rejected_count, total. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Отклики кандидатов</h1>
+        <p class="small muted">Решение по отклику сразу видно кандидату: новый → принят
+            или отклонён.</p>
+    </div>
+    <div class="actions">
+        <span class="badge badge-new">новых: {{ new_count }}</span>
+        <span class="badge badge-accepted">принято: {{ accepted_count }}</span>
+        <span class="badge badge-rejected">отклонено: {{ rejected_count }}</span>
+        <span class="badge badge-count">ждут решения: {{ pending_count }}</span>
+        <a href="/employer/bank" role="button" class="small secondary">Банк кандидатов</a>
+    </div>
+</div>
+
+{% if rows %}
+    <article class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Кандидат</th>
+                    <th>Потребность</th>
+                    <th>Релевантность</th>
+                    <th>Статус</th>
+                    <th>Решение</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>
+                            <a href="/employer/candidates/{{ row.application.candidate_id }}">
+                                {{ row.candidate.profile.name }}</a>
+                            <span class="tiny muted">
+                                {{ row.candidate.specialization_title }} ·
+                                {{ row.candidate.grade_title }}</span>
+                            {% if row.application.is_new %}<span class="badge badge-new">новый</span>{% endif %}
+                        </td>
+                        <td>
+                            <a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a>
+                            <span class="tiny muted">{{ salary_note(row.vacancy.salary_min, row.vacancy.salary_max) }}</span>
+                        </td>
+                        <td><span class="badge badge-count">{{ row.match.score }}%</span></td>
+                        <td><span class="badge badge-{{ row.application.status }}">
+                            {{ status_title(row.application.status) }}</span></td>
+                        <td>
+                            <form action="/employer/applications/{{ row.application.id }}/status" method="post">
+                                <div class="actions">
+                                    <button type="submit" name="status" value="accepted"
+                                            class="small">Принять</button>
+                                    <button type="submit" name="status" value="rejected"
+                                            class="small secondary">Отклонить</button>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </article>
+
+    <div class="grid">
+        {% for row in rows %}
+            <article class="card">
+                <div class="card-head">
+                    <h3><a href="/employer/candidates/{{ row.application.candidate_id }}">
+                        {{ row.candidate.profile.name }}</a></h3>
+                    <span class="badge badge-{{ row.application.status }}">
+                        {{ status_title(row.application.status) }}</span>
+                </div>
+                <p class="small muted">Отклик на
+                    <a href="/employer/vacancies/{{ row.vacancy.id }}">{{ row.vacancy.title }}</a>
+                    · {{ row.application.created_at }}</p>
+                {% set card = row.candidate %}
+                {% include "_partial_candidate_card.html" %}
+                {% set match = row.match %}
+                {% include "_partial_match.html" %}
+                <div class="actions">
+                    <a href="/employer/vacancies/{{ row.vacancy.id }}" role="button"
+                       class="small secondary">К потребности</a>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty">
+        Откликов пока нет. Кандидаты видят потребность в банке, только если она опубликована,
+        и откликаются профилем — решение остаётся за вами.
+        <div class="actions">
+            <a href="/employer" role="button" class="small">Кабинет</a>
+            <a href="/employer/bank" role="button" class="small secondary">Банк кандидатов</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>ФСП «спец. трек» — документация (черновик)</title>
+<style>
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, "PT Sans", sans-serif;
+  font-size: 10.4pt; line-height: 1.45; color: #1c2733; margin: 0;
+}
+h1 { font-size: 22pt; line-height: 1.2; margin: 0 0 6pt; color: #0d2b45; }
+h2 {
+  font-size: 14.5pt; color: #0d2b45; margin: 0 0 8pt;
+  padding-bottom: 4pt; border-bottom: 2px solid #2f6ea8; break-after: avoid;
+}
+h3 { font-size: 11.6pt; color: #17456e; margin: 14pt 0 5pt; break-after: avoid; }
+h4 { font-size: 10.6pt; color: #17456e; margin: 11pt 0 4pt; break-after: avoid; }
+p { margin: 0 0 6pt; }
+ul, ol { margin: 0 0 7pt; padding-left: 16pt; }
+li { margin-bottom: 2.5pt; }
+code, kbd {
+  font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 9pt;
+  background: #f2f5f8; border: 1px solid #dfe6ed; border-radius: 3px; padding: 0 3px;
+}
+pre {
+  background: #f6f8fa; border: 1px solid #dfe6ed; border-left: 3px solid #2f6ea8;
+  border-radius: 4px; padding: 7px 9px; font-size: 8.8pt; overflow-wrap: break-word;
+  white-space: pre-wrap; margin: 0 0 8pt; break-inside: avoid;
+}
+pre code { background: none; border: 0; padding: 0; font-size: 8.8pt; }
+table { width: 100%; border-collapse: collapse; margin: 0 0 9pt; font-size: 8.7pt; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th, td { border: 1px solid #ccd6e0; padding: 3.5px 5px; vertical-align: top; text-align: left; }
+th { background: #e8eff6; color: #0d2b45; font-weight: 600; }
+tbody tr:nth-child(even) td { background: #fafcfd; }
+.chapter { break-before: page; }
+.cover { padding-top: 30mm; }
+.cover .subtitle { font-size: 13pt; color: #3d5a75; margin: 0 0 18pt; max-width: 150mm; }
+.cover .meta { font-size: 10pt; color: #46586a; border-top: 1px solid #ccd6e0; padding-top: 8pt; max-width: 125mm; }
+.badge {
+  display: inline-block; background: #0d2b45; color: #fff; font-size: 8.4pt;
+  letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px;
+}
+.box { border-radius: 4px; padding: 8px 11px; margin: 0 0 9pt; break-inside: avoid; font-size: 9.6pt; }
+.box p:last-child { margin-bottom: 0; }
+.box-danger { background: #fdecec; border: 1px solid #eabcbc; border-left: 4px solid #c0392b; }
+.box-warn { background: #fef6e6; border: 1px solid #ecd9a8; border-left: 4px solid #d99a12; }
+.box-note { background: #eef4fb; border: 1px solid #c5d8ec; border-left: 4px solid #2f6ea8; }
+.box-ok { background: #eef8f0; border: 1px solid #c3e2ca; border-left: 4px solid #2f8f4e; }
+.box .t { font-weight: 700; display: block; margin-bottom: 3pt; }
+.toc ol { padding-left: 14pt; }
+.toc li { margin-bottom: 3.5pt; }
+.small { font-size: 9pt; color: #55697c; }
+.mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.8pt; }
+.num { text-align: right; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+footer.end { margin-top: 14pt; border-top: 1px solid #ccd6e0; padding-top: 6pt; font-size: 8.6pt; color: #6b7c8c; }
+</style>
+</head>
+<body>
+<section class="cover">
+  <span class="badge">Черновик · v0.9</span>
+  <h1 style="margin-top:14pt">ФСП «спец. трек»</h1>
+  <p class="subtitle">Цифровая платформа-агрегатор ИТ-вакансий, в которой работодатель
+  находит кандидата и направляет приглашение, а доступ к банку профилей определяется
+  уровнем организации процессов в компании. Документация по реализации MVP.</p>
+  <div class="meta">
+    <p><strong>Назначение документа:</strong> описание архитектуры, модели данных,
+    бизнес-логики, карты маршрутов и пользовательских сценариев MVP. Отдельная глава
+    посвящена тому, какие служебные механизмы сейчас намеренно открыты в интерфейсе
+    и должны быть закрыты в продуктивной версии.</p>
+    <p><strong>Стек:</strong> Python 3.13 · FastAPI · SQLModel · SQLite · Jinja2 ·
+    Pico CSS · pdfplumber</p>
+    <p><strong>Статус:</strong> MVP для демонстрации на хакатоне ФСП. Документ —
+    черновик; источник требований — <code>TZ.txt</code> и «ФСП спец. трек ТЗ.pdf»
+    в корне репозитория.</p>
+    <p><strong>Дата:</strong> октябрь 2026 г.</p>
+  </div>
+
+  <div class="box box-danger" style="margin-top:16pt; max-width:170mm">
+    <span class="t">Важно: приложение работает в демонстрационном режиме</span>
+    <p>Сейчас в интерфейсе видны <strong>все внутренние логики и административные
+    процессы</strong>: веса и формула начисления релевантности, методика подсчёта
+    баллов и категорий ФСП, сигналы и арифметика рейтинга компании, причина закрытия
+    профиля, уровень организации процессов работодателя (тир), матрица видимости
+    целиком, код подтверждения входа прямо на экране, демо-учётные записи, мок-реестр
+    ФСП, тестовый сертификат КИТ и открытая документация API (<code>/api/docs</code>).</p>
+    <p>В продуктивной версии кандидат и работодатель этого видеть <strong>не
+    будут</strong>. Полный перечень с обоснованием — <strong>глава 10</strong>,
+    план закрытия — <strong>глава 13</strong>.</p>
+  </div>
+</section>
+
+<section class="chapter">
+<h2>Содержание</h2>
+<div class="toc">
+<ol>
+  <li>Назначение платформы и ключевая механика</li>
+  <li>Термины и сокращения</li>
+  <li>Архитектура, состав модулей и стек</li>
+  <li>Модель данных</li>
+  <li>Бизнес-логика: правила, баллы и ранжирование</li>
+  <li>Парсер сертификата КИТ</li>
+  <li>Аутентификация, сессии и регистрация</li>
+  <li>Карта маршрутов и шаблонов</li>
+  <li>Пользовательские сценарии</li>
+  <li><strong>Демонстрационный режим: что видно сейчас и что закрывается в продукте</strong></li>
+  <li>Известные отличия реализации от ТЗ и ограничения MVP</li>
+  <li>Запуск, проверка и демо-данные</li>
+  <li>Чек-лист вывода в продакшн</li>
+  <li>Приложение: справочник констант</li>
+</ol>
+</div>
+<p class="small">Номера разделов в тексте соответствуют разделам <code>TZ.txt</code>
+(например, «раздел 6.5» — матрица видимости, «раздел 8» — парсер КИТ).</p>
+</section>
+<section class="chapter">
+<h2>1. Назначение платформы и ключевая механика</h2>
+<p>Платформа ФСП «спец. трек» связывает амбициозных ИТ-специалистов — участников и
+выпускников ФСП, держателей сертификатов КИТ i.moscow — и организации с высоким
+уровнем организации инженерных процессов.</p>
+<p><strong>Инверсия привычной механики job-сайта:</strong> не кандидат рассылает
+отклики, а работодатель находит кандидата в банке профилей и направляет приглашение
+с вилкой зарплаты. Кандидат получает входящие предложения и сам решает, принимать
+или отклонить. Дополнительно реализован встречный поток: кандидат видит «банк
+потребностей» (открытые вакансии) и может откликнуться сам.</p>
+<h3>1.1. Три источника достоверности профиля</h3>
+<ul>
+  <li><strong>Сертификат КИТ i.moscow</strong> — центр оценки компетенций: грейд,
+  баллы (0–100), специальность, номер и дата сертификата. Загружается PDF или
+  текстовая копия, разбирается регулярными выражениями (глава 6). Грейд из
+  сертификата имеет высший приоритет и даёт метку «верифицирован».</li>
+  <li><strong>История ФСП</strong> — достижения участника (дисциплина, соревнование,
+  место, роль, баллы). В MVP берётся из мок-реестра <code>fsp_mock.py</code> по
+  email; в продукте — из реестра ФСП. Даёт сумму баллов и категорию S–D.</li>
+  <li><strong>Барометр амбиций</strong> — три вопроса анкеты кандидата, из которых
+  выводятся четыре флага; два и более флага дают вердикт «амбициозный профиль».</li>
+</ul>
+<h3>1.2. Ключевая идея разграничения доступа</h3>
+<p>Работодатель видит не всех кандидатов, а только тех, чей уровень профиля
+соответствует его «тиру» — оценке того, как компания относится к сотрудникам и как
+устроены её инженерные процессы. Тир считается из шести нейтральных вопросов анкеты
+(раздел 6.4 ТЗ) и определяет: (а) какие профили доступны в банке, (б) какой состав
+полей карточки открыт. ФИО и контакты кандидата раскрываются работодателю только
+после того, как кандидат принял приглашение.</p>
+<h3>1.3. Принципы реализации</h3>
+<ul>
+  <li><strong>Детерминированность.</strong> Никаких ML-моделей, эмбеддингов,
+  векторных БД и внешних сервисов: словари, регулярные выражения, сравнения,
+  сортировки. Каждый признак объясняется текстом.</li>
+  <li><strong>Лёгкость.</strong> Запуск на обычном ноутбуке без GPU; SQLite +
+  FastAPI + шаблоны; отклик мгновенный (сотни записей).</li>
+  <li><strong>Без брокеров и воркеров.</strong> Нет Redis, RabbitMQ, Celery,
+  фоновых задач и сложных миграций.</li>
+  <li><strong>Производные значения не хранятся.</strong> Грейд, амбициозность,
+  категория ФСП, релевантность считаются на лету из правил — не разъезжаются при
+  изменении исходных данных.</li>
+</ul>
+</section>
+
+<section class="chapter">
+<h2>2. Термины и сокращения</h2>
+<table>
+<thead><tr><th style="width:26%">Термин</th><th>Определение в рамках реализации</th></tr></thead>
+<tbody>
+<tr><td>ФСП</td><td>Форум стратегического проектирования / соревнования, история
+участия в которых даёт кандидату баллы, роль и категорию. В MVP — мок-реестр.</td></tr>
+<tr><td>КИТ (i.moscow/kit)</td><td>Центр оценки компетенций; выдаёт сертификат с
+грейдом, баллами и специальностью. Источник верификации профиля.</td></tr>
+<tr><td>Тир (уровень организации процессов)</td><td>Целое число 1…3, считается из
+шести ответов анкеты работодателя: 5–6 «здоровых» ответов → 3, 3–4 → 2, 0–2 → 1.
+Для кандидата обозначается словами: «развитые» / «базовые» / «начальные процессы».</td></tr>
+<tr><td>Банк кандидатов</td><td>Совокупность профилей, доступных работодателю
+данного тира; открытые профили с полностью заполненной анкетой.</td></tr>
+<tr><td>Банк потребностей</td><td>Опубликованные вакансии (<code>Vacancy.open = True</code>),
+которые видит кандидат на <code>/needs</code>.</td></tr>
+<tr><td>Потребность / вакансия</td><td>Запрос работодателя: специализация, грейд и
+режим сопоставления грейда, стек, вилка зарплаты, формат работы, город, размер команды.</td></tr>
+<tr><td>Барометр амбиций</td><td>Анкета кандидата из трёх вопросов, порождающая
+флаги <code>captain</code>, <code>influence</code>, <code>wide_stack</code>,
+<code>fsp_captain</code>; порог вердикта — 2 флага.</td></tr>
+<tr><td>Категория ФСП (S–D)</td><td>Итог истории ФСП по порогам суммы баллов:
+≥150 → S, ≥100 → A, ≥60 → B, ≥30 → C, иначе D.</td></tr>
+<tr><td>Релевантность (match score)</td><td>Процент 0–100 соответствия пары
+«кандидат ↔ потребность», считается по весам признаков и сопровождается списком
+человеческих причин.</td></tr>
+<tr><td>Приглашение (Invitation)</td><td>Основная механика: работодатель → кандидату,
+сообщение + вилка зарплаты, статусы <code>sent → viewed → accepted/rejected</code>.</td></tr>
+<tr><td>Отклик (Application)</td><td>Встречная механика: кандидат → работодателю на
+потребность, те же статусы.</td></tr>
+<tr><td>Верифицирован</td><td><code>Candidate.is_verified = True</code>, если грейд
+подтверждён сертификатом КИТ (производное свойство, не поле БД).</td></tr>
+<tr><td>Профиль закрыт (restricted)</td><td>Кандидат не виден работодателю: профиль
+заполнен не полностью, скрыт кандидатом из банка либо его уровень выше доступного
+тиру работодателя.</td></tr>
+<tr><td>Красные флаги</td><td>Маркеры сомнительных формулировок вакансии
+(<code>RED_FLAG_MARKERS</code>) и признаки неполноты профиля кандидата
+(<code>red_flags()</code>).</td></tr>
+</tbody>
+</table>
+</section>
+<section class="chapter">
+<h2>3. Архитектура, состав модулей и стек</h2>
+<h3>3.1. Слои приложения</h3>
+<pre><code>HTTP-запрос
+   │
+   ├─ main.py ............... приложение, lifespan (create_all), /static,
+   │                          middleware сессии → request.state.me,
+   │                          обработчик RedirectException (flash + 303)
+   │
+   ├─ routers/*.py .......... маршруты: проверка прав (auth.require_*),
+   │                          разбор формы, вызов services/helpers, render()
+   │
+   ├─ services.py ........... прикладные операции: apply_candidate_profile,
+   │                          connect_fsp, parse_kit_upload, apply_kit,
+   │                          apply_employer_survey, refresh_candidate
+   │
+   ├─ helpers.py ............ сборка данных для страниц: карточки кандидатов
+   │                          с фильтрацией полей по тиру, банк, подборка,
+   │                          матрица видимости, рейтинг компании, счётчики
+   │
+   ├─ logic.py .............. детерминированные правила: специализация, грейд,
+   │                          амбициозность, тир, видимость, ранжирование,
+   │                          релевантность, справочники и форматирование
+   │
+   ├─ employer_rating.py .... мок-рейтинг компании (сигналы + объяснение)
+   ├─ fsp_mock.py ........... мок-реестр ФСП: достижения, баллы, категории
+   ├─ kit_parser.py ......... регулярки и pdfplumber для сертификата КИТ
+   ├─ auth.py ............... Principal, коды, токены, TTL, guard-функции
+   ├─ content.py ............ тексты анкет и служебные сноски
+   ├─ models.py ............. SQLModel-таблицы + производные свойства
+   ├─ database.py ........... engine, get_db, init_db, DATABASE_URL
+   └─ web.py ................ Jinja2Templates, глобальные функции шаблонов,
+                              render(), flash/redirect, cookie-константы</code></pre>
+
+<h3>3.2. Файлы и ответственность</h3>
+<table>
+<thead><tr><th style="width:22%">Модуль</th><th style="width:16%">Раздел ТЗ</th><th>Что делает</th></tr></thead>
+<tbody>
+<tr><td class="mono">main.py</td><td>11.1, 15.1, 15.2, 16.2</td><td>Точка входа: создание приложения, подключение роутеров, раздача <code>/static</code>, middleware, читающий cookie <code>fsp_session</code> и кладущий <code>Principal</code> в <code>request.state.me</code>, маршруты <code>/</code> и <code>/health</code>, Swagger на <code>/api/docs</code>.</td></tr>
+<tr><td class="mono">database.py</td><td>15.1</td><td>SQLite через SQLModel; путь задаётся <code>DATABASE_URL</code>; <code>init_db()</code> = <code>SQLModel.metadata.create_all</code> (без миграций).</td></tr>
+<tr><td class="mono">models.py</td><td>5, 6.8</td><td>Таблицы Candidate, Employer, Vacancy, Achievement, Invitation, Application, UserSession (имя таблицы <code>session</code>); константы статусов; производные свойства <code>grade</code>, <code>ambition</code>, <code>is_verified</code>, <code>is_public</code>, <code>survey_completed</code>.</td></tr>
+<tr><td class="mono">logic.py</td><td>6, 10.3, 14.4</td><td>Вся бизнес-логика: справочники, определение специализации и грейда, амбициозность, тир, матрица видимости, состав полей по тирам, ранжирование, релевантность с объяснением, валидации, маскирование ФИО, красные флаги.</td></tr>
+<tr><td class="mono">services.py</td><td>7, 8, 12</td><td>Применение форм к моделям, пересчёт производных полей, подключение/отключение истории ФСП, разбор и запись сертификата КИТ, сохранение анкеты работодателя с пересчётом тира.</td></tr>
+<tr><td class="mono">seed.py</td><td>9.3, 16.2</td><td>Демо-стенд для защиты проекта: 6 кандидатов, 3 работодателя, 4 потребности и 2 приглашения, созданные штатными сервисами; автозаполнение пустой базы при старте (<code>ensure_demo_data</code>), пересборка (<code>reset_demo</code>, CLI <code>--force</code>), отчёт о стенде (<code>summary_lines</code>) и список демо-доступов для <code>/login</code> (<code>demo_accounts</code>).</td></tr>
+<tr><td class="mono">helpers.py</td><td>8, 11, 13</td><td>Готовые блоки контекста для шаблонов: <code>candidate_card</code> (фильтр полей по тиру смотрящего), <code>candidate_full</code>, <code>fsp_block</code>, <code>kit_block</code>, <code>bank_rows</code>, <code>vacancy_candidates</code>, <code>visibility_matrix</code>, <code>match_rows</code>, <code>company_rating</code>, <code>public_stats</code>.</td></tr>
+<tr><td class="mono">auth.py</td><td>12</td><td>Генерация кода (6 цифр) и токена (<code>secrets.token_urlsafe(24)</code>), TTL сессии 7 дней и кода 15 минут, класс <code>Principal</code> с ролями и URL, guard-функции <code>require_candidate</code>, <code>require_employer</code>, <code>require_new_user</code>.</td></tr>
+<tr><td class="mono">kit_parser.py</td><td>8</td><td>Извлечение текста PDF (pdfplumber) и разбор полей сертификата регулярными выражениями; при любой ошибке — <code>None</code>, приложение не падает; содержит <code>DEMO_CERTIFICATE_TEXT</code> для демо-загрузки.</td></tr>
+<tr><td class="mono">fsp_mock.py</td><td>9</td><td>Мок-реестр ФСП: 8 тестовых участников, сумма баллов достижений, пороги категорий, старшая роль, список дисциплин.</td></tr>
+<tr><td class="mono">employer_rating.py</td><td>14.1</td><td>Мок-рейтинг компании 0–10: сигналы (отзывы, реестр отечественного ПО, тендеры, разрыв зарплат) + объяснение; для недемо-компаний значения детерминированно вычисляются из MD5-хеша названия.</td></tr>
+<tr><td class="mono">content.py</td><td>7, 9.4, 14.1</td><td>Формулировки шести вопросов анкеты работодателя, трёх вопросов барометра, демонстрационные сноски (<code>FSP_DEMO_NOTE</code>, <code>AUTH_DEMO_NOTE</code>, <code>RATING_DEMO_NOTE</code>), шаги регистрации.</td></tr>
+<tr><td class="mono">web.py</td><td>11, 12.5</td><td>Окружение Jinja2 и глобальные функции/справочники шаблонов, <code>render()</code> с автоподмешиванием flash, <code>me</code>, заголовка и значений по умолчанию <code>errors=[]</code>, <code>error=None</code>; <code>RedirectException</code> → flash-cookie + 303.</td></tr>
+<tr><td class="mono">routers/</td><td>10</td><td><code>auth.py</code> (вход, код, выход), <code>registration.py</code> (пошаговые анкеты), <code>candidate.py</code> (кабинет, потребности, отклики, приглашения), <code>employer.py</code> (кабинет, анкета, вакансии, банк, приглашения, отклики).</td></tr>
+<tr><td class="mono">templates/</td><td>11</td><td>30 шаблонов Jinja2: <code>base.html</code>, лендинг, вход и код подтверждения, 5 страниц регистрации, страницы кабинета кандидата, страницы кабинета работодателя, 6 переиспользуемых парциалов карточек и форм.</td></tr>
+<tr><td class="mono">static/css/</td><td>11.1</td><td><code>pico.min.css</code> + <code>app.css</code> (карточки, бейджи, шаги регистрации, флеш-сообщения, сетка).</td></tr>
+<tr><td class="mono">tests/</td><td>12.3, 12.4</td><td>Набор pytest (95 проверок): <code>conftest.py</code> (временная БД через <code>DATABASE_URL</code>, сид-данные, токены ролей, <code>TestClient</code> без прохождения редиректов), <code>test_smoke_routes.py</code> (компиляция 30 шаблонов, обход всех GET-путей под тремя ролями, guard-функции и изоляция ролей), <code>test_smoke_strict.py</code> (рендер всех страниц при <code>StrictUndefined</code>), <code>test_smoke_employer_flow.py</code> (анкета → тир → банк → потребность → приглашение → контакты, КИТ, матрица видимости), <code>test_seed.py</code> (демо-стенд: состав, матрица видимости, тиры, ранжирование, идемпотентность, <code>--force</code>), <code>test_kit_specialization.py</code> (специализация по полю специальности сертификата КИТ).</td></tr>
+</tbody>
+</table>
+
+<h3>3.3. Соглашения кода</h3>
+<ul>
+  <li>Каждая функция помечена номером раздела ТЗ в docstring — соответствие требованиям проверяется построчно.</li>
+  <li>Все страницы рендерятся на сервере (Jinja2); формы отправляются POST и завершаются редиректом 303 с одноразовым flash-сообщением в cookie.</li>
+  <li>Маршруты не фильтруют поля кандидатов самостоятельно: разграничение по тиру всегда проходит через <code>helpers.candidate_card()</code> → <code>logic.candidate_visible_profile()</code>.</li>
+  <li>Проверка прав — guard-функции <code>auth.py</code>: при отсутствии доступа бросается <code>RedirectException</code>, её перехватывает общий обработчик в <code>main.py</code>.</li>
+  <li>Шаблоны обращаются к словарям как к элементам (<code>row['match']</code>), а не как к атрибутам (<code>row.match</code>), чтобы не попадать на <code>dict.items()</code>; глобальная функция <code>tier_label</code> продублирована алиасом <code>tier_title</code>, потому что маршруты работодателя кладут в контекст одноимённую строку.</li>
+</ul>
+
+<h3>3.4. Зависимости</h3>
+<pre><code>fastapi==0.142.2      uvicorn[standard]==0.54.0   jinja2==3.1.6
+sqlmodel==0.0.47      python-multipart==0.0.20    pdfplumber==0.11.10
+# только для локального прогона тестов:
+pytest==9.1.1         httpx==0.28.1</code></pre>
+</section>
+<section class="chapter">
+<h2>4. Модель данных</h2>
+<h3>4.1. Состав БД</h3>
+<table>
+<thead><tr><th style="width:20%">Таблица</th><th style="width:14%">Класс</th><th>Назначение</th></tr></thead>
+<tbody>
+<tr><td class="mono">candidate</td><td>Candidate</td><td>Профиль кандидата: анкета, барометр амбиций, подключение ФСП, данные сертификата КИТ, служебные флаги.</td></tr>
+<tr><td class="mono">employer</td><td>Employer</td><td>Профиль организации и ответы анкеты процессов (JSON), из которых считается тир.</td></tr>
+<tr><td class="mono">vacancy</td><td>Vacancy</td><td>Потребность работодателя: специализация, грейд и режим сопоставления, стек, вилка, формат, город, команда.</td></tr>
+<tr><td class="mono">achievement</td><td>Achievement</td><td>Достижение ФСП (дисциплина, соревнование, место, роль, баллы). Создана по ТЗ 5.4; в MVP заполняется из мок-реестра по email, а не из этой таблицы (см. главу 11).</td></tr>
+<tr><td class="mono">invitation</td><td>Invitation</td><td>Приглашение работодателя кандидату: сообщение, вилка, статус.</td></tr>
+<tr><td class="mono">application</td><td>Application</td><td>Отклик кандидата на потребность: сообщение, статус.</td></tr>
+<tr><td class="mono">session</td><td>UserSession</td><td>Сессия и незавершённая регистрация: токен, роль, код подтверждения, срок действия, признак подтверждения email.</td></tr>
+</tbody>
+</table>
+
+<h3>4.2. Candidate — кандидат</h3>
+<table>
+<thead><tr><th style="width:26%">Поле</th><th style="width:14%">Тип</th><th>Пояснение</th></tr></thead>
+<tbody>
+<tr><td class="mono">id</td><td>int, PK</td><td>Первичный ключ.</td></tr>
+<tr><td class="mono">name, email</td><td>str</td><td>ФИО и логин; email уникальный (индекс). До принятия приглашения работодателю показывается маскированное имя.</td></tr>
+<tr><td class="mono">city</td><td>str</td><td>Город; виден работодателю только tier 3.</td></tr>
+<tr><td class="mono">specialization</td><td>str</td><td>Код специализации (backend, frontend, ds, devops, qa, support, security, mobile, embedded, other).</td></tr>
+<tr><td class="mono">specialization_manual</td><td>bool</td><td><em>Служебное:</em> выбрано вручную — автоопределение больше не перезаписывает значение.</td></tr>
+<tr><td class="mono">team_role, work_format</td><td>str</td><td>Ответы барометра: желаемая роль и формат работы.</td></tr>
+<tr><td class="mono">stack</td><td>JSON list</td><td>Стек; участвует в определении специализации и флага «широкий стек» (3+ направлений).</td></tr>
+<tr><td class="mono">fsp_role</td><td>str</td><td>Роль в команде ФСП (капитан / архитектор / разработчик / участник); источник флага <code>fsp_captain</code>.</td></tr>
+<tr><td class="mono">ambitions</td><td>JSON list</td><td>Коды сработавших флагов барометра.</td></tr>
+<tr><td class="mono">grade_override</td><td>str</td><td><em>Служебное:</em> ручной/вычисленный грейд, если КИТ не загружен.</td></tr>
+<tr><td class="mono">fsp_connected, fsp_demo</td><td>bool</td><td>Подключена ли история ФСП; <code>fsp_demo</code> — <em>служебное:</em> данные пришли из мок-реестра.</td></tr>
+<tr><td class="mono">fsp_score, fsp_category</td><td>int, str</td><td>Сумма баллов достижений и категория S–D (по умолчанию 0 и D — «правило пустого ФСП»).</td></tr>
+<tr><td class="mono">kit_connected, kit_certificate_number, kit_competition, kit_place, kit_team, kit_grade, kit_score, kit_date</td><td>разные</td><td>Поля сертификата КИТ: номер, соревнование, место, состав команды, грейд, баллы 0–100, дата выдачи.</td></tr>
+<tr><td class="mono">kit_raw, kit_source</td><td>str</td><td><em>Служебные:</em> распознанный текст сертификата и источник (pdf / text).</td></tr>
+<tr><td class="mono">consent</td><td>bool</td><td>Согласие на обработку персональных данных (152-ФЗ).</td></tr>
+<tr><td class="mono">visible_in_bank</td><td>bool</td><td>Видимость профиля в банке; кандидат может скрыть себя.</td></tr>
+<tr><td class="mono">created_at, updated_at</td><td>str</td><td>Метки времени в формате ISO-8601 UTC.</td></tr>
+</tbody>
+</table>
+<div class="box box-note">
+<span class="t">Производные свойства (не хранятся в БД)</span>
+<p><code>grade</code> — КИТ → ручной выбор → барометр → junior;
+<code>ambition</code> — сумма флагов барометра ≥ 2;
+<code>is_verified</code> — <code>kit_connected and (kit_grade or kit_certificate_number)</code>;
+<code>is_public</code> — синоним <code>visible_in_bank</code>.</p>
+</div>
+</section>
+<section>
+<h3>4.3. Employer — работодатель</h3>
+<table>
+<thead><tr><th style="width:26%">Поле</th><th style="width:14%">Тип</th><th>Пояснение</th></tr></thead>
+<tbody>
+<tr><td class="mono">id</td><td>int, PK</td><td>Первичный ключ.</td></tr>
+<tr><td class="mono">company, email</td><td>str</td><td>Название организации и логин (email уникальный).</td></tr>
+<tr><td class="mono">contact_name, position, city, description</td><td>str</td><td>Контактное лицо, должность, город, описание деятельности.</td></tr>
+<tr><td class="mono">survey_answers</td><td>JSON dict</td><td>Шесть ответов анкеты: <code>q1_lead_time</code>, <code>q2_support</code>, <code>q3_remote</code>, <code>q4_mistake</code>, <code>q5_outsource</code>, <code>q6_benefits</code>; вариант А = <code>true</code>.</td></tr>
+<tr><td class="mono">tier</td><td>int</td><td>Уровень организации процессов 1–3. Пересчитывается при каждом сохранении анкеты (<code>services.apply_employer_survey</code>). <strong>Отличие от ТЗ 5.2:</strong> там тир не хранится в БД — см. главу 11.</td></tr>
+<tr><td class="mono">consent</td><td>bool</td><td>Согласие на обработку данных.</td></tr>
+<tr><td class="mono">last_visit_at</td><td>str</td><td><em>Служебное:</em> для счётчика «новых откликов» на дашборде.</td></tr>
+<tr><td class="mono">created_at, updated_at</td><td>str</td><td>Метки времени ISO-8601 UTC.</td></tr>
+</tbody>
+</table>
+<p class="small">Свойство <code>survey_completed</code> — анкета заполнена, если даны все 6 ответов.
+По ТЗ работодатель не должен видеть свой тир; в демо-сборке он показывается словами — см. главу 10, п. 5.</p>
+
+<h3>4.4. Vacancy — потребность</h3>
+<table>
+<thead><tr><th style="width:26%">Поле</th><th style="width:14%">Тип</th><th>Пояснение</th></tr></thead>
+<tbody>
+<tr><td class="mono">id, employer_id</td><td>int</td><td>Ключ и внешний ключ на работодателя.</td></tr>
+<tr><td class="mono">company</td><td>str</td><td><em>Служебное:</em> копия названия компании для карточек (чтобы не делать лишний JOIN).</td></tr>
+<tr><td class="mono">title, description</td><td>str</td><td>Название позиции и текст потребности; текст проверяется на маркеры «красных флагов».</td></tr>
+<tr><td class="mono">specialization, grade</td><td>str</td><td>Категория и требуемый грейд.</td></tr>
+<tr><td class="mono">grade_match</td><td>str</td><td>Режим сопоставления грейда: <code>any</code> / <code>exact</code> / <code>plus_minus</code> (по умолчанию <code>plus_minus</code>) — расширение раздела 10.3 ТЗ.</td></tr>
+<tr><td class="mono">stack</td><td>JSON list</td><td>Требуемый стек; доля совпадений даёт баллы релевантности.</td></tr>
+<tr><td class="mono">salary_min, salary_max</td><td>int</td><td>Вилка зарплаты обязательна: нули не проходят валидацию (<code>logic.validate_salary</code>).</td></tr>
+<tr><td class="mono">format, city, team_size</td><td>str</td><td>remote / office / hybrid, город, размер команды.</td></tr>
+<tr><td class="mono">open, is_new</td><td>bool</td><td><em>Служебные:</em> публикация в банке потребностей и отметка «новая» для кандидата.</td></tr>
+<tr><td class="mono">created_at, updated_at</td><td>str</td><td>Метки времени.</td></tr>
+</tbody>
+</table>
+
+<h3>4.5. Связи и статусы</h3>
+<table>
+<thead><tr><th style="width:22%">Таблица</th><th style="width:34%">Ключевые поля</th><th>Правила</th></tr></thead>
+<tbody>
+<tr><td class="mono">achievement</td><td>candidate_id, discipline, competition, place, role, points, date</td><td>Источник баллов ФСП. Сумма <code>points</code> → <code>fsp_score</code>; старшая роль → <code>fsp_role</code>.</td></tr>
+<tr><td class="mono">invitation</td><td>employer_id, candidate_id, vacancy_id, message, salary_min/max, status, is_new</td><td>Вилка обязательна. Статусы: <code>sent → viewed → accepted / rejected</code>. Контакты кандидата раскрываются работодателю только при <code>accepted</code>.</td></tr>
+<tr><td class="mono">application</td><td>candidate_id, employer_id, vacancy_id, message, status, is_new</td><td>Отклик кандидата; те же статусы. Работодатель меняет статус через <code>POST /employer/applications/{id}/status</code>.</td></tr>
+<tr><td class="mono">session</td><td>token, user_id, email, role, code, code_expires_at, is_verified</td><td>До подтверждения кода хранит «незавершённую регистрацию»: <code>user_id</code> пустой, есть email, роль и код. TTL сессии 7 дней, TTL кода 15 минут.</td></tr>
+</tbody>
+</table>
+</section>
+<section class="chapter">
+<h2>5. Бизнес-логика: правила, баллы и ранжирование</h2>
+<p>Все правила сосредоточены в <code>logic.py</code> и детерминированы: словари,
+регулярные выражения, сравнения, арифметика. Ниже — действующие формулы.</p>
+
+<h3>5.1. Специализация кандидата (раздел 6.1)</h3>
+<p>Приоритет источников: <strong>1) КИТ-сертификат → 2) дисциплина ФСП → 3) стек →
+4) ручной выбор</strong>. Автоопределение не перезаписывает значение, если кандидат
+выбрал специализацию вручную (<code>specialization_manual = True</code>).</p>
+<ul>
+  <li><strong>КИТ:</strong> текст специальности из сертификата сопоставляется со
+  словарём <code>KIT_SPECIALTY_KEYWORDS</code> (например, «технической поддержки» →
+  support, «данным»/«машинн» → ds, «фронт»/«веб» → frontend, «разработ»/«python» → backend).</li>
+  <li><strong>ФСП:</strong> дисциплины достижений сопоставляются с
+  <code>FSP_DISCIPLINE_KEYWORDS</code> («алгоритм» → backend, «беспилот»/«робот» →
+  embedded, «данн»/«ml»/«ai» → ds, «продуктов» → backend).</li>
+  <li><strong>Стек:</strong> <code>STACK_SPEC_KEYWORDS</code>; порядок словаря задаёт
+  приоритет при равенстве числа совпадений.</li>
+</ul>
+<p class="small">Специальность берётся из распознанного поля сертификата
+(<code>logic.kit_specialty_text</code> → <code>kit_parser.parse_kit_text</code>), а не из
+всего текста документа: в шапке любого сертификата есть строка «Прошел(а) тестирование по
+специальности …» (п. 8.1 ТЗ), поэтому поиск ключевых слов по всему <code>kit_raw</code>
+срабатывал на слове «тестирование» и уводил любую анкету в QA. Регрессию проверяет
+<code>tests/test_kit_specialization.py</code>.</p>
+<p class="small">Коды специализаций: backend, frontend, ds, devops, qa, support,
+security, mobile, embedded, other (словарь <code>SPECIALIZATIONS</code>).</p>
+
+<h3>5.2. Грейд кандидата (раздел 6.2)</h3>
+<pre><code>resolve_grade(kit_grade, kit_certificate_number, ambitions, grade_override):
+  1. kit_grade из сертификата            → источник "kit"        (verified = True)
+  2. буква J/M/S в номере сертификата    → источник "kit_number" (verified = True)
+     формат номера: ГГГГММДД-Н-{J|M|S}-ННН
+  3. grade_override (ручной выбор)       → источник "manual"     (verified = False)
+  4. барометр: ≥ 2 флагов                → middle, "barometer"   (verified = False)
+  5. иначе                               → junior, "default"     (verified = False)</code></pre>
+<p>Верифицированным считается только грейд из сертификата КИТ: он влияет на матрицу
+видимости, на ранжирование и даёт баллы в релевантности.</p>
+
+<h3>5.3. Барометр амбиций (разделы 6.3 и 7.3)</h3>
+<table>
+<thead><tr><th style="width:18%">Код флага</th><th style="width:36%">Условие</th><th>Формулировка для кандидата</th></tr></thead>
+<tbody>
+<tr><td class="mono">captain</td><td><code>team_role</code> ∈ {капитан, архитектор}</td><td>роль в команде — капитан или архитектор</td></tr>
+<tr><td class="mono">influence</td><td><code>work_format</code> = «обсуждаем и влияю»</td><td>формат работы — «обсуждаем и влияю»</td></tr>
+<tr><td class="mono">wide_stack</td><td>стек ≥ 3 элементов (<code>is_wide_stack</code>)</td><td>широкий стек (3 и более направлений)</td></tr>
+<tr><td class="mono">fsp_captain</td><td><code>fsp_role</code> ∈ {капитан, архитектор}</td><td>роль в команде ФСП — капитан или архитектор</td></tr>
+</tbody>
+</table>
+<p><strong>Вердикт:</strong> <code>ambition = True</code>, если сработало ≥ 2 флагов
+(<code>AMBITION_THRESHOLD = 2</code>). Текстовая расшифровка
+(<code>ambitions_note</code>) сообщает количество флагов, порог, список сработавших и
+вердикт — в демо-сборке она показывается кандидату и на лендинге (см. главу 10, п. 17).</p>
+</section>
+<section>
+<h3>5.4. Тир работодателя (разделы 6.4 и 7.1)</h3>
+<p>Шесть нейтральных вопросов анкеты, вариант А = «здоровый» ответ = <code>True</code>.
+<code>tier_score</code> = число истинных ответов (0–6), далее:</p>
+<pre><code>tier_score ≥ 5  →  тир 3  «развитые процессы»
+tier_score 3–4  →  тир 2  «базовые процессы»
+tier_score 0–2  →  тир 1  «начальные процессы»</code></pre>
+<table>
+<thead><tr><th style="width:6%">№</th><th style="width:44%">Вопрос (сокращённо)</th><th style="width:25%">Вариант А → True</th><th>Вариант Б → False</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Время от готовности задачи до тестового стенда</td><td>меньше рабочего дня</td><td>три дня и больше</td></tr>
+<tr><td>2</td><td>Решение бытовых/периферийных проблем сотрудника</td><td>один запрос в поддержку, меняют в течение дня</td><td>ищет сам, договаривается с АХО, ждёт</td></tr>
+<tr><td>3</td><td>Рабочее место удалённого сотрудника</td><td>портативный ноутбук, работа откуда удобно</td><td>стационарный моноблок или VPN с привязкой к месту</td></tr>
+<tr><td>4</td><td>Реакция на падение тестового контура новичком</td><td>разбор на ретро, правки в онбординге</td><td>публичный разбор с последствиями</td></tr>
+<tr><td>5</td><td>Внешние команды в разработке продукта</td><td>ноль или одна</td><td>несколько, часть на подряде</td></tr>
+<tr><td>6</td><td>Бюджет на инженера (питание, спорт, медицина)</td><td>от 8 000 ₽</td><td>до 2 000 ₽ либо строки нет</td></tr>
+</tbody>
+</table>
+<p class="small">Все шесть вопросов обязательны: вариант «не знаю» не предусмотрен,
+иначе тир невозможно посчитать. Формулировки намеренно нейтральные и не подсказывают
+«правильный» ответ (требование раздела 7.1 ТЗ).</p>
+
+<h3>5.5. Матрица видимости (раздел 6.5)</h3>
+<p>Минимальный тир работодателя, который видит кандидата
+(<code>candidate_min_tier</code>): кандидат виден, если <code>tier ≥ min_tier</code>.</p>
+<table>
+<thead><tr><th style="width:30%">Строка матрицы (<code>profile_level</code>)</th><th style="width:14%">Мин. тир</th><th>Условие</th></tr></thead>
+<tbody>
+<tr><td>топ ФСП</td><td class="num">3</td><td>грейд senior <strong>и</strong> (категория ФСП S или A <strong>или</strong> роль капитан/архитектор при <code>fsp_score &gt; 0</code>)</td></tr>
+<tr><td>опытный специалист / мидл</td><td class="num">2</td><td>грейд middle или senior (не топ ФСП)</td></tr>
+<tr><td>новичок с амбициями</td><td class="num">2</td><td>грейд junior <strong>и</strong> (вердикт «амбициозный» <strong>или</strong> роль ФСП капитан/архитектор)</td></tr>
+<tr><td>новичок без амбиций</td><td class="num">1</td><td>грейд junior без амбиций и капитанской роли — виден всем</td></tr>
+</tbody>
+</table>
+<p>Дополнительные фильтры банка (<code>visibility_allows</code>): профиль заполнен
+полностью, кандидат не скрыл себя из банка (<code>is_public</code>), матрица
+пройдена. Закрытые профили не исчезают бесследно: работодатель видит их число и
+замаскированные имена — в продукте это поведение меняется (глава 10, п. 7).</p>
+
+<h3>5.6. Состав полей карточки по тирам (<code>TIER_FIELDS</code>)</h3>
+<table>
+<thead><tr><th style="width:12%">Тир</th><th>Поля карточки, доступные работодателю</th></tr></thead>
+<tbody>
+<tr><td>1 — начальные процессы</td><td>специализация, грейд, метка верификации, баллы КИТ, стек, достижения ФСП кратко</td></tr>
+<tr><td>2 — базовые процессы</td><td>+ амбициозность, роль в команде ФСП</td></tr>
+<tr><td>3 — развитые процессы</td><td>+ город, полный профиль (достижения ФСП полностью)</td></tr>
+</tbody>
+</table>
+<p class="small">Для тира 1 амбициозность не показывается вовсе
+(<code>is_ambitious = None</code>, <code>ambition_hidden = True</code>) — работодатель
+не может вывести её косвенно. ФИО и email лежат в карточке в ключах
+<code>real_name</code>/<code>email</code> и используются шаблонами только для
+приглашений со статусом <code>accepted</code>.</p>
+</section>
+<section>
+<h3>5.7. Релевантность пары «кандидат ↔ потребность» (разделы 6.6 и 10.3)</h3>
+<p>Функция <code>logic.score_match()</code> возвращает процент 0–100, краткую сводку и
+список причин. Веса (<code>MATCH_WEIGHTS</code>, сумма = 100):</p>
+<table>
+<thead><tr><th style="width:22%">Признак</th><th style="width:10%">Вес</th><th>Как начисляются баллы</th></tr></thead>
+<tbody>
+<tr><td>Специализация</td><td class="num">35</td><td>35 — если специализация кандидата совпадает со специализацией потребности; 0 — если нет (совпадение проверяет <code>specialization_match</code>).</td></tr>
+<tr><td>Стек</td><td class="num">25</td><td><code>round(25 × matched / total)</code> — доля совпавших элементов стека потребности. Если стек в потребности не указан: ≥ 3 элементов у кандидата → 25, 1–2 элемента → 12 (<code>25 // 2</code>), пусто → 0.</td></tr>
+<tr><td>Грейд</td><td class="num">20</td><td>20 — грейд не задан в потребности или режим <code>any</code>; 20 — грейд подходит по режиму (<code>exact</code> / <code>plus_minus</code>); 10 (<code>20 // 2</code>) — грейд соседний при <code>plus_minus</code>; 0 — не совпадает.</td></tr>
+<tr><td>Верификация грейда</td><td class="num">10</td><td>10 — грейд подтверждён сертификатом КИТ; 3 (<code>10 // 3</code>) — грейд заявлен кандидатом самостоятельно.</td></tr>
+<tr><td>История ФСП</td><td class="num">10</td><td>По категории: S → 10, A → 9, B → 7, C → 5, D → 2 (<code>MATCH_FSP_POINTS</code>); +1 балл за вердикт «амбициозный профиль», но не больше 10.</td></tr>
+</tbody>
+</table>
+<pre><code>score = spec_points + stack_points + grade_points + verified_points + fsp_points
+score = max(0, min(100, score))          # отсечение до диапазона 0…100</code></pre>
+<p>К каждому начислению формируется текстовая причина, например: «специализация
+совпадает: Backend-разработка», «стек: совпало 3 из 5 (python, fastapi, docker)»,
+«грейд соседний: у кандидата Middle, в потребности Senior (указанный грейд ± 1
+уровень)», «история ФСП: 120 баллов, категория A, амбициозный профиль».</p>
+
+<h4>Порядок подборки (<code>rank_candidates</code>)</h4>
+<ol>
+  <li>Отсев: профиль неполный → исключён; кандидат скрыл профиль → исключён;
+  <code>tier</code> работодателя ниже минимального тира кандидата → исключён;
+  специализация не совпадает со специализацией потребности → исключён.</li>
+  <li>Сортировка по убыванию релевантности.</li>
+  <li>При равной релевантности — строгий порядок раздела 6.6 (<code>rank_key</code>):
+  верифицированный грейд выше неверифицированного → баллы КИТ по убыванию → баллы ФСП
+  по убыванию → роль ФСП капитан/архитектор выше прочих → амбициозный профиль выше.</li>
+</ol>
+<p class="small">Дашборд работодателя сортирует отклики так: сначала новые
+(<code>is_new</code>), затем по убыванию релевантности.</p>
+
+<div class="box box-warn">
+<span class="t">Демонстрационная прозрачность</span>
+<p>Веса, формула и поштучные причины сейчас показываются работодателю прямо в
+интерфейсе (страница потребности, карточка соответствия). В продукте эта методика
+закрывается — подробнее в главе 10, пп. 1–2.</p>
+</div>
+</section>
+<section>
+<h3>5.8. История ФСП: баллы и категории (раздел 9)</h3>
+<pre><code>fsp_score    = Σ points по всем достижениям участника
+fsp_category = S при fsp_score ≥ 150 | A ≥ 100 | B ≥ 60 | C ≥ 30 | иначе D
+fsp_role     = старшая роль достижений: капитан &gt; архитектор &gt; разработчик &gt; участник
+specialization (источник №2) = по ключевым словам дисциплин</code></pre>
+<p>Источник данных в MVP — мок-реестр <code>fsp_mock.FSP_REGISTRY</code>: 8 тестовых
+участников с разными сценариями (топ ФСП, крепкий мидл, новичок-капитан с бронзой,
+новичок без достижений, кандидат без истории ФСП). Если email не найден —
+возвращается пустая история, и срабатывает «правило пустого ФСП»:
+<code>fsp_score = 0</code>, <code>fsp_category = D</code>, профиль остаётся
+работоспособным. Подключение и отключение истории — действия кандидата
+(<code>POST /candidate/fsp/connect</code>, <code>/disconnect</code>).</p>
+<p class="small">Словесные расшифровки категорий (<code>FSP_CATEGORY_TITLES</code>),
+например «S — топ-уровень: стабильные победы в чемпионатах», «D — история ФСП не
+найдена», по ТЗ видны только кандидату.</p>
+
+<h3>5.9. Рейтинг компании (раздел 14.1, <code>employer_rating.py</code>)</h3>
+<pre><code>score  = 3.0
+       + (reviews − 3.0) × 1.5                      # отзывы сотрудников, 0…5
+       + (1.0, если компания в реестре отеч. ПО)
+       + min(tenders, 20) / 20 × 1.5                # публичные закупки за год
+       − (salary_ratio − 5.0) × 0.6, если ratio &gt; 5 # разрыв зарплат топ-менеджмента
+       + (tier − 2) × 0.8, если тир известен        # анкета процессов
+score  = round(clamp(score, 0, 10), 1)
+label  = «высокий» ≥ 7.5 | «средний» ≥ 5.0 | «низкий» иначе</code></pre>
+<p>Для четырёх демо-компаний сигналы заданы явно (ТехКорп, Вектор Софт, ПромТех
+Групп, ОлдЛайн), для остальных — детерминированно вычисляются из MD5-хеша названия.
+Рейтинг видит только кандидат: в карточке потребности, на странице потребности и в
+приглашении. Если тир неизвестен (карточка до приглашения), сигнал анкеты в рейтинг
+не добавляется — цифра тира не раскрывается никому.</p>
+
+<h3>5.10. Маркеры сомнительных вакансий (раздел 14.4)</h3>
+<p>Словарь <code>RED_FLAG_MARKERS</code> (13 формулировок: «молодой дружный коллектив»,
+«как семья», «стрессоустойчив», «ненормированный рабочий день», «готовность к
+переработкам», «зарплата по итогам собеседования», «оформление по желанию» и др.)
+сканируется в описании потребности функцией <code>scan_markers()</code>; найденные
+маркеры показываются кандидату как предупреждение. Отдельная функция
+<code>red_flags(candidate)</code> собирает признаки риска в профиле кандидата: грейд не
+подтверждён КИТ, профиль заполнен не полностью, профиль скрыт, история ФСП не найдена
+(0 баллов, категория D), меньше двух флагов барометра, специализация не определена.</p>
+
+<h3>5.11. Анонимизация и раскрытие контактов (раздел 6.7)</h3>
+<ul>
+  <li>До принятия приглашения работодатель видит маскированное имя
+  (<code>mask_name</code>): «Бурцева Вероника» → «Б. В.», одно слово → «Б••••».</li>
+  <li>Единственное правило раскрытия: ФИО и email становятся доступны работодателю
+  после <code>status = accepted</code> (<code>CONTACT_REVEAL_NOTE</code>).</li>
+  <li>Email кандидата не показывается в банке и в подборке ни при каком тире.</li>
+</ul>
+
+<h3>5.12. Валидации</h3>
+<table>
+<thead><tr><th style="width:28%">Проверка</th><th>Правило и сообщение</th></tr></thead>
+<tbody>
+<tr><td>Вилка зарплаты</td><td>Обе границы обязательны и больше нуля; нижняя не больше верхней. Сообщения: «Укажите вилку зарплаты: обе границы обязательны и больше нуля», «Нижняя граница вилки не может быть больше верхней».</td></tr>
+<tr><td>Email</td><td>Регулярное выражение <code>[^@\s]+@[^@\s]+\.[^@\s]+</code>; иначе «Укажите корректный email». Email — логин, уникальный в рамках роли.</td></tr>
+<tr><td>Полнота профиля кандидата</td><td>Обязательны: имя и фамилия, специализация, роль в команде, формат работы, согласие на обработку данных (152-ФЗ). Неполный профиль не участвует в банке, ранжировании и приглашениях.</td></tr>
+<tr><td>Анкета работодателя</td><td>Все 6 вопросов обязательны, допустимые значения — <code>true</code>/<code>false</code>; иначе «Ответьте на вопрос: …».</td></tr>
+<tr><td>Сертификат КИТ</td><td>Если файл не похож на сертификат — «файл не похож на сертификат КИТ — заполните данные вручную в кабинете»; приложение не падает (раздел 8.4).</td></tr>
+</tbody>
+</table>
+</section>
+<section class="chapter">
+<h2>6. Парсер сертификата КИТ</h2>
+<p>Модули <code>kit_parser.py</code> (разбор) и <code>services.parse_kit_upload</code>
+(приём файла). Главное правило раздела 8.4 ТЗ: при любой ошибке возвращается
+<code>None</code>, кандидату предлагается ручной ввод, приложение не падает.</p>
+<h3>6.1. Что извлекается</h3>
+<table>
+<thead><tr><th style="width:22%">Поле</th><th style="width:38%">Регулярное выражение</th><th>Пример из сертификата</th></tr></thead>
+<tbody>
+<tr><td>Баллы (<code>kit_score</code>)</td><td class="mono">Результат\s+(\d+)\s*балл</td><td>«Результат 84 баллов из 100» → 84 (отсекается до 0…100)</td></tr>
+<tr><td>Грейд (<code>kit_grade</code>)</td><td class="mono">Уровень\s+Грейда\s+([A-Za-zА-Яа-яЁё]+)</td><td>«Уровень Грейда Senior» → senior</td></tr>
+<tr><td>Номер (<code>kit_number</code>)</td><td class="mono">(\d{8}-\d+-[JMSjms]-\d+)</td><td>«20260119-37-S-102905»</td></tr>
+<tr><td>Дата (<code>kit_date</code>)</td><td class="mono">Выдан\s+(\d{2}\.\d{2}\.\d{4})</td><td>«Выдан 19.01.2026» → 19.01.2026</td></tr>
+<tr><td>Специальность</td><td class="mono">по\s+специальности\s+(.+)</td><td>«Специалист технической поддержки (L1/L2/L3)» → support</td></tr>
+<tr><td>ФИО</td><td>строка после заголовка «КИТ», 2–4 слова с заглавной буквы</td><td>«Бурцева Вероника Львовна»</td></tr>
+</tbody>
+</table>
+<h3>6.2. Порядок обработки</h3>
+<ol>
+  <li>PDF → текст через <code>pdfplumber</code> (<code>extract_pdf_text</code>);
+  остальные файлы читаются как UTF-8 текст с игнорированием ошибок.</li>
+  <li>Текст → поля (<code>parse_kit_text</code>). Если грейд словом не распознан,
+  применяется резервное правило: буква <code>J/M/S</code> в номере сертификата
+  (<code>_grade_from_number</code>).</li>
+  <li>Если не распознано ни одного поля — <code>None</code>; маршрут показывает
+  ошибку и предлагает ручной ввод.</li>
+  <li>Успех → <code>services.apply_kit()</code>: записываются
+  <code>kit_connected</code>, <code>kit_source</code> (pdf/text), номер, соревнование
+  («КИТ i.moscow · специальность»), грейд, баллы, дата, распознанный текст
+  (<code>kit_raw</code>); специализация обновляется, только если она не выбрана
+  вручную; затем <code>refresh_candidate()</code> пересчитывает грейд и производные.</li>
+  <li>Место и состав команды в сертификате КИТ не печатаются — поля
+  <code>kit_place</code> и <code>kit_team</code> остаются пустыми.</li>
+</ol>
+<p class="small">В модуле есть <code>DEMO_CERTIFICATE_TEXT</code> — пример реального
+сертификата из раздела 8.1 ТЗ, используется для демо-загрузки и проверок. В продукте
+его и поле <code>kit_raw</code> в интерфейсе не показывают (глава 10, п. 11).</p>
+</section>
+
+<section class="chapter">
+<h2>7. Аутентификация, сессии и регистрация</h2>
+<h3>7.1. Вход без пароля</h3>
+<table>
+<thead><tr><th style="width:30%">Параметр</th><th>Значение</th></tr></thead>
+<tbody>
+<tr><td>Логин</td><td>email + роль (candidate / employer); пароль не используется</td></tr>
+<tr><td>Код подтверждения</td><td>6 цифр, <code>secrets.randbelow(1_000_000)</code>, TTL 15 минут (<code>CODE_TTL_MINUTES</code>)</td></tr>
+<tr><td>Токен сессии</td><td><code>secrets.token_urlsafe(24)</code>, TTL 7 дней (<code>SESSION_TTL_DAYS</code>)</td></tr>
+<tr><td>Cookie</td><td><code>fsp_session</code> (httpOnly, sameSite=lax) и <code>fsp_flash</code> — base64-JSON одноразового сообщения, max-age 120 с</td></tr>
+<tr><td>Хранение сессий</td><td>Таблица <code>session</code> в SQLite; JWT не используется</td></tr>
+<tr><td>Редиректы</td><td>После POST — 303 See Other; сообщение передаётся через flash-cookie</td></tr>
+</tbody>
+</table>
+<h3>7.2. Principal и защита маршрутов</h3>
+<p>Middleware в <code>main.py</code> читает cookie и кладёт объект
+<code>auth.Principal</code> в <code>request.state.me</code>. Свойства:
+<code>role</code>, <code>is_authenticated</code> (email подтверждён и сессия не
+истекла), <code>user</code> (кандидат или работодатель), <code>title</code>,
+<code>home_url</code> (<code>/candidate</code> или <code>/employer</code>),
+<code>register_url</code>, <code>needs_registration</code> (сессия подтверждена, но
+анкета не заполнена).</p>
+<p>Guard-функции: <code>require_principal(request, role)</code>,
+<code>require_candidate</code>, <code>require_employer</code>,
+<code>require_new_user</code>. При нарушении бросается <code>RedirectException</code>
+— общий обработчик возвращает 303 и flash-сообщение, поэтому «чужой» URL всегда
+безопасно редиректит, а не показывает ошибку 500.</p>
+<h3>7.3. Пошаговая регистрация</h3>
+<table>
+<thead><tr><th style="width:16%">Роль</th><th style="width:42%">Шаги</th><th>Особенности</th></tr></thead>
+<tbody>
+<tr><td>Кандидат</td><td>1) Профиль и барометр → 2) История ФСП → 3) Сертификат КИТ</td><td>До подтверждения кода сессия хранит «незавершённую регистрацию»: <code>user_id</code> пустой, есть email, роль и код. Шаги 2 и 3 можно пропустить и пройти позже в кабинете.</td></tr>
+<tr><td>Работодатель</td><td>1) Профиль компании → 2) Анкета процессов (6 вопросов)</td><td>После второго шага сохраняется <code>survey_answers</code> и пересчитывается <code>tier</code>; без заполненной анкеты банк кандидатов недоступен.</td></tr>
+</tbody>
+</table>
+<div class="box box-warn">
+<span class="t">Демонстрационный режим аутентификации</span>
+<p>SMTP не подключён: код подтверждения возвращается в шаблон и показывается на
+странице <code>/verify</code> (<code>demo_code</code>), а в подвале всех страниц
+выводится <code>AUTH_DEMO_NOTE</code>. В продукте — ФСП ID через Keycloak или magic
+link на email, показ кода исключён (глава 10, п. 9).</p>
+</div>
+</section>
+<section class="chapter">
+<h2>8. Карта маршрутов и шаблонов</h2>
+<p>Всего 48 HTTP-операций (24 уникальных пути GET/POST + служебные). Все страницы
+серверные; API-эндпоинтов с JSON, кроме <code>/health</code> и OpenAPI, нет.</p>
+<h3>8.1. Публичные маршруты и вход</h3>
+<table>
+<thead><tr><th style="width:9%">Метод</th><th style="width:31%">Путь</th><th>Назначение / шаблон</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td class="mono">/</td><td>Лендинг: счётчики банка, описание механики, матрица тиров. Авторизованных сразу редиректит в кабинет или на анкету. Шаблон <code>index.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/health</td><td>Техническая проверка стенда: <code>{"status": "ok"}</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/login</td><td>Вход по email и роли; POST создаёт сессию с кодом. Шаблоны <code>login.html</code>, далее <code>verify.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/verify</td><td>Подтверждение кода (6 цифр, 15 минут). В демо-режиме код показывается на странице.</td></tr>
+<tr><td>POST</td><td class="mono">/logout</td><td>Завершение сессии, удаление cookie.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/register/candidate</td><td>Шаг 1: профиль и барометр амбиций. Шаблон <code>register_candidate_profile.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/register/candidate/fsp</td><td>Шаг 2: подключение истории ФСП (в демо — список email мок-реестра). Шаблон <code>register_candidate_fsp.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/register/candidate/kit</td><td>Шаг 3: загрузка сертификата КИТ (PDF/TXT), можно пропустить. Шаблон <code>register_candidate_kit.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/register/employer</td><td>Шаг 1: профиль компании. Шаблон <code>register_employer_profile.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/register/employer/survey</td><td>Шаг 2: анкета из 6 вопросов → тир. Шаблон <code>register_employer_survey.html</code>.</td></tr>
+</tbody>
+</table>
+
+<h3>8.2. Кабинет кандидата</h3>
+<table>
+<thead><tr><th style="width:9%">Метод</th><th style="width:31%">Путь</th><th>Назначение / шаблон</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td class="mono">/candidate</td><td>Дашборд: профиль, грейд и источник, барометр, ФСП-блок, КИТ-блок, входящие приглашения, матрица видимости. <code>candidate_home.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/candidate/edit</td><td>Редактирование анкеты. <code>candidate_edit.html</code> + <code>_partial_profile_form.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/candidate/visibility</td><td>Показать/скрыть профиль в банке.</td></tr>
+<tr><td>POST</td><td class="mono">/candidate/fsp/connect<br>/candidate/fsp/disconnect</td><td>Подключить и отключить историю ФСП (пересчёт баллов и категории).</td></tr>
+<tr><td>POST</td><td class="mono">/candidate/kit<br>/candidate/kit/remove</td><td>Загрузить/заменить сертификат КИТ и удалить его.</td></tr>
+<tr><td>GET</td><td class="mono">/needs</td><td>Банк потребностей: открытые вакансии с вилкой и рейтингом компании. <code>needs.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/needs/{vacancy_id}</td><td>Страница потребности: описание, рейтинг, красные флаги, форма отклика. <code>need_detail.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/needs/{vacancy_id}/apply</td><td>Отклик кандидата (сообщение) → <code>Application</code> со статусом <code>sent</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/candidate/applications</td><td>Мои отклики и их статусы. <code>candidate_applications.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/candidate/invitations</td><td>Входящие приглашения. <code>candidate_invitations.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/candidate/invitations/{id}</td><td>Приглашение: вилка, уровень процессов компании словами, рейтинг. <code>candidate_invitation_detail.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/candidate/invitations/{id}/accept<br>…/reject</td><td>Принять или отклонить; при принятии работодателю раскрываются ФИО и email.</td></tr>
+</tbody>
+</table>
+</section>
+<section>
+<h3>8.3. Кабинет работодателя</h3>
+<table>
+<thead><tr><th style="width:9%">Метод</th><th style="width:31%">Путь</th><th>Назначение / шаблон</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td class="mono">/employer</td><td>Дашборд: уровень процессов, потребности, отклики (новые сверху), приглашения, размер банка. <code>employer_home.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/employer/survey</td><td>Повторное прохождение анкеты процессов с пересчётом тира. <code>employer_survey_edit.html</code> + <code>_partial_survey_form.html</code>.</td></tr>
+<tr><td>GET/POST</td><td class="mono">/employer/vacancies/new</td><td>Создание потребности: специализация, грейд и режим сопоставления, стек, вилка, формат, город, команда. <code>vacancy_form.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/employer/vacancies/{id}</td><td>Страница потребности: ранжированная подборка кандидатов, число и имена закрытых профилей, форма приглашения. <code>vacancy_detail.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/employer/vacancies/{id}/toggle<br>…/delete</td><td>Снять с публикации / опубликовать, удалить потребность.</td></tr>
+<tr><td>POST</td><td class="mono">/employer/vacancies/{id}/invite</td><td>Приглашение: сообщение + вилка (валидируется) → <code>Invitation</code> со статусом <code>sent</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/employer/bank?spec=</td><td>Банк кандидатов с фильтром по специализации: открытые карточки, счётчик закрытых, состав доступных полей. <code>employer_bank.html</code>.</td></tr>
+<tr><td>GET</td><td class="mono">/employer/candidates/{id}</td><td>Карточка кандидата: открытая (<code>employer_candidate_detail.html</code>) или закрытая (<code>employer_candidate_restricted.html</code>).</td></tr>
+<tr><td>GET</td><td class="mono">/employer/applications</td><td>Отклики кандидатов с релевантностью. <code>employer_applications.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/employer/applications/{id}/status</td><td>Смена статуса отклика: viewed / accepted / rejected.</td></tr>
+<tr><td>GET</td><td class="mono">/employer/invitations</td><td>Отправленные приглашения и их статусы; при <code>accepted</code> — раскрытые ФИО и email. <code>employer_invitations.html</code>.</td></tr>
+<tr><td>POST</td><td class="mono">/employer/invitations/{id}/status</td><td>Смена статуса приглашения работодателем (например, отозвать).</td></tr>
+</tbody>
+</table>
+
+<h3>8.4. Шаблоны (30 файлов)</h3>
+<table>
+<thead><tr><th style="width:22%">Группа</th><th>Файлы</th></tr></thead>
+<tbody>
+<tr><td>Каркас и публичные</td><td class="mono">base.html, index.html, login.html, verify.html</td></tr>
+<tr><td>Регистрация кандидата</td><td class="mono">register_candidate_profile.html, register_candidate_fsp.html, register_candidate_kit.html</td></tr>
+<tr><td>Регистрация работодателя</td><td class="mono">register_employer_profile.html, register_employer_survey.html</td></tr>
+<tr><td>Кабинет кандидата</td><td class="mono">candidate_home.html, candidate_edit.html, needs.html, need_detail.html, candidate_applications.html, candidate_invitations.html, candidate_invitation_detail.html</td></tr>
+<tr><td>Кабинет работодателя</td><td class="mono">employer_home.html, employer_survey_edit.html, vacancy_form.html, vacancy_detail.html, employer_bank.html, employer_candidate_detail.html, employer_candidate_restricted.html, employer_applications.html, employer_invitations.html</td></tr>
+<tr><td>Парциалы</td><td class="mono">_partial_candidate_card.html, _partial_vacancy_card.html, _partial_match.html, _partial_profile_form.html, _partial_survey_form.html</td></tr>
+</tbody>
+</table>
+<h4>Глобальные переменные шаблонов (<code>web.py</code>)</h4>
+<p class="small mono">format_salary · specialization_title · grade_title ·
+category_title · tier_label · tier_title · profile_level · status_title ·
+format_title · money · percent · place_text · salary_note · mask_name ·
+ambitions_labels · grade_match_note · stack_note · restricted_reason ·
+SPECIALIZATIONS · GRADES · TEAM_ROLES · FSP_ROLES · WORK_FORMATS · VACANCY_FORMATS ·
+AMBITIONS · GRADE_MATCH_MODES · TIER_FIELDS · TIER_DESCRIPTIONS ·
+FSP_CATEGORY_TITLES · MATCH_WEIGHTS · CONTACT_REVEAL_NOTE · EMPLOYER_SURVEY ·
+CANDIDATE_BAROMETER · FSP_DEMO_NOTE · AUTH_DEMO_NOTE · RATING_DEMO_NOTE ·
+CANDIDATE_STEPS · EMPLOYER_STEPS</p>
+<div class="box box-note">
+<span class="t">Почему это важно для главы 10</span>
+<p>Справочники <code>MATCH_WEIGHTS</code>, <code>TIER_FIELDS</code>,
+<code>TIER_DESCRIPTIONS</code> и сноски <code>*_DEMO_NOTE</code> прописаны как
+глобальные переменные окружения Jinja2 — то есть доступны <em>любому</em> шаблону без
+передачи из маршрута. Закрытие служебной информации в продукте начинается с удаления
+этих глобалов и ревизии шаблонов.</p>
+</div>
+</section>
+<section class="chapter">
+<h2>9. Пользовательские сценарии</h2>
+<h3>9.1. Кандидат: от входа до принятого приглашения</h3>
+<ol>
+  <li><strong>Вход.</strong> <code>/login?role=candidate</code> → email → код из
+  «письма» (в демо — на экране) → <code>/verify</code>.</li>
+  <li><strong>Шаг 1 — профиль и барометр.</strong> ФИО, город, специализация, стек,
+  желаемая роль, формат работы, согласие на обработку данных. Система сразу считает
+  флаги барометра и предварительный грейд.</li>
+  <li><strong>Шаг 2 — история ФСП.</strong> Подключение реестра: показываются
+  достижения, сумма баллов, категория S–D и старшая роль. Можно пропустить — тогда
+  <code>fsp_score = 0</code>, категория D.</li>
+  <li><strong>Шаг 3 — сертификат КИТ.</strong> Загрузка PDF/TXT: грейд, баллы,
+  специальность, номер и дата. Грейд из сертификата перезаписывает предварительный и
+  даёт метку «верифицирован». Можно пропустить и загрузить позже в кабинете.</li>
+  <li><strong>Кабинет.</strong> Кандидат видит: итоговый грейд и его источник,
+  вердикт барометра, баллы и категорию ФСП, данные сертификата, строку матрицы
+  видимости («топ ФСП», «опытный специалист», «новичок с амбициями» …), предупреждения
+  по профилю, входящие приглашения. Здесь же — переключатель видимости в банке,
+  редактирование анкеты, замена/удаление сертификата.</li>
+  <li><strong>Банк потребностей.</strong> <code>/needs</code> — список открытых
+  вакансий с обязательной вилкой; <code>/needs/{id}</code> — описание, рейтинг
+  компании словами и цифрой, предупреждения о сомнительных формулировках, форма отклика.</li>
+  <li><strong>Отклик.</strong> Сообщение → статус <code>sent</code>; работодатель
+  переводит его в <code>viewed</code> / <code>accepted</code> / <code>rejected</code>.</li>
+  <li><strong>Приглашение.</strong> Кандидат видит сообщение, вилку, уровень процессов
+  компании <em>словами</em> и её рейтинг. Принять → работодатель получает ФИО и email;
+  отклонить → контакты не раскрываются.</li>
+</ol>
+
+<h3>9.2. Работодатель: от анкеты до раскрытия контактов</h3>
+<ol>
+  <li><strong>Вход.</strong> <code>/login?role=employer</code> → email → код.</li>
+  <li><strong>Шаг 1 — профиль компании.</strong> Название, город, контактное лицо,
+  должность, описание, согласие.</li>
+  <li><strong>Шаг 2 — анкета процессов.</strong> Шесть нейтральных вопросов; ответы
+  сохраняются в JSON, из них считается тир. В демо-сборке уровень показывается
+  словами сразу после сохранения (в продукте — нет, см. главу 10, п. 5).</li>
+  <li><strong>Потребность.</strong> <code>/employer/vacancies/new</code>:
+  специализация, грейд и режим сопоставления (строго / ±1 / не важен), стек, вилка
+  (обязательна), формат, город, размер команды, описание.</li>
+  <li><strong>Подборка.</strong> Страница потребности показывает ранжированный список:
+  сначала фильтр по матрице видимости и полноте профиля, затем отбор по специализации,
+  затем сортировка по релевантности и правилам раздела 6.6. Отдельно — число и
+  замаскированные имена закрытых профилей.</li>
+  <li><strong>Банк кандидатов.</strong> <code>/employer/bank</code> с фильтром по
+  специализации; карточки анонимны: маскированное имя, специализация, грейд, метка
+  верификации, баллы КИТ, стек, достижения ФСП; для тира 2 добавляются амбициозность и
+  роль ФСП, для тира 3 — город и полный профиль.</li>
+  <li><strong>Приглашение.</strong> Сообщение + вилка → <code>sent</code>. Статусы
+  видны в <code>/employer/invitations</code>.</li>
+  <li><strong>Отклики.</strong> <code>/employer/applications</code>: новые сверху,
+  далее по убыванию релевантности; смена статуса одним действием.</li>
+  <li><strong>Раскрытие контактов.</strong> Только после <code>accepted</code> со
+  стороны кандидата работодатель видит ФИО и email — до этого в карточке маскированное
+  имя, а в приглашении соответствующая сноска.</li>
+</ol>
+<div class="box box-ok">
+<span class="t">Сквозной демо-сценарий для защиты проекта</span>
+<p>1) Зарегистрировать кандидата из мок-реестра ФСП (топ-уровень) и загрузить
+демо-сертификат КИТ → профиль становится «топ ФСП». 2) Зарегистрировать двух
+работодателей: с 6 «здоровыми» ответами (тир 3) и с 2 (тир 1). 3) Создать потребность
+у второго → топ-кандидат попадёт в закрытые профили, у первого → окажется на верхней
+строке подборки. 4) Отправить приглашение, принять его кандидатом → контакты
+раскрываются только у работодателя тира 3, пригласившего кандидата.</p>
+</div>
+</section>
+<section class="chapter">
+<h2>10. Демонстрационный режим: что видно сейчас и что закрывается в продукте</h2>
+<div class="box box-danger">
+<span class="t">Главное, что нужно знать о текущей сборке</span>
+<p>Сейчас платформа намеренно работает в режиме <strong>полной демонстрационной
+прозрачности</strong>: в интерфейсе видны <em>все</em> внутренние логики и
+административные процессы — как начисляются баллы и релевантность, почему профиль
+закрыт, какой у работодателя уровень процессов, откуда берутся данные ФСП и рейтинг
+компании, какой код подтверждения и какие учётные записи тестовые.</p>
+<p>Это сделано для защиты проекта: жюри и заказчик должны видеть, что ранжирование
+детерминированно, объяснимо и соответствует ТЗ, а не является «чёрным ящиком».
+<strong>В продуктивной версии кандидат и работодатель этого видеть не будут.</strong>
+Ниже — полный перечень с обоснованием по каждому пункту.</p>
+</div>
+
+<h3>10.1. Алгоритмы, веса и начисление баллов</h3>
+<table>
+<thead><tr><th style="width:20%">Что видно сейчас</th><th style="width:24%">Где именно</th><th style="width:29%">Почему в продукте закрыто</th><th>Что остаётся пользователю</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>1. Веса релевантности</strong> 35 / 25 / 20 / 10 / 10 (<code>MATCH_WEIGHTS</code>)</td>
+<td>Работодателю: страница потребности <code>/employer/vacancies/{id}</code>
+(<code>vacancy_detail.html</code>, 53–55 и 125), карточка соответствия
+<code>_partial_match.html</code> (18–22). Переменная глобальна для всех шаблонов
+(<code>web.py</code>)</td>
+<td>Формула ранжирования — ядро продукта и коммерческая тайна. Публикация весов
+позволяет «заточить» профиль и текст вакансии под алгоритм (гейминг), обесценивает
+подборку и создаёт почву для споров о дискриминации: видно, что неверифицированный
+грейд штрафуется, а амбициозность даёт бонус</td>
+<td>Процент релевантности и 2–3 человеческие причины без чисел: «стек совпал на 3 из
+5», «грейд подтверждён сертификатом КИТ», «история ФСП: категория A»</td>
+</tr>
+<tr>
+<td><strong>2. Поштучное начисление баллов</strong> — список <code>reasons</code> из
+<code>score_match()</code>, включая штраф <code>verified // 3</code> и бонус +1 за амбициозность</td>
+<td>Работодателю: <code>_partial_match.html</code> на дашборде, в банке, в подборке
+потребности и в откликах</td>
+<td>Раскрывает внутреннюю методику целиком, в том числе штрафные ветки; позволяет
+восстановить алгоритм по одному экрану и манипулировать им</td>
+<td>Краткое объяснение выбора системы («почему этот кандидат выше») без арифметики и
+без указания штрафов</td>
+</tr>
+<tr>
+<td><strong>3. Методика баллов ФСП</strong>: сумма <code>points</code> по достижениям
+и пороги категорий 150 / 100 / 60 / 30 → S/A/B/C/D</td>
+<td>Кандидату: <code>/candidate</code> (<code>candidate_home.html</code>, 81–84), шаг 2
+регистрации <code>/register/candidate/fsp</code>; категории — в карточках работодателя</td>
+<td>Методика начисления баллов принадлежит оператору ФСП: платформа должна получать
+готовые баллы и категорию из реестра, а не считать их сама. Публикация порогов
+провоцирует накрутку достижений и споры о «несправедливой» категории</td>
+<td>Итог: «Баллы и категория получены из реестра ФСП, дата синхронизации …» + список
+самих достижений (место, роль, соревнование)</td>
+</tr>
+<tr>
+<td><strong>4. Баллы за каждое достижение</strong> (<code>points</code> в мок-реестре,
+таблица <code>achievement</code>)</td>
+<td>Кандидату: шаг 2 регистрации и кабинет; таблица достижений с колонкой баллов</td>
+<td>В MVP значения тестовые и не подтверждены оператором ФСП; показывать «официальные»
+баллы из мока нельзя — это введение пользователя в заблуждение</td>
+<td>Достижения без весов; баллы — только как агрегат из официального реестра</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h3>10.2. Разграничение доступа: тир, матрица, причины закрытия</h3>
+<table>
+<thead><tr><th style="width:20%">Что видно сейчас</th><th style="width:24%">Где именно</th><th style="width:29%">Почему в продукте закрыто</th><th>Что остаётся пользователю</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>5. Уровень процессов работодателя словами</strong> (<code>tier_label</code>)
+и его расшифровка (<code>TIER_DESCRIPTIONS</code>)</td>
+<td>Работодателю: <code>/employer</code> (<code>employer_home.html</code>, 16 и 167),
+<code>/employer/bank</code> (13, 79), <code>/employer/vacancies/{id}</code> (130–131),
+<code>/register/employer/survey</code> (14)</td>
+<td><strong>Прямое нарушение ТЗ 5.2:</strong> «работодатель не видит свой тир в
+интерфейсе. Ни цифрой, ни словами». Зная уровень и его расшифровку, компания понимает,
+какие ответы анкеты «повышают» доступ, — анкета теряет смысл и превращается в тест на
+угадывание</td>
+<td>Работодатель видит только результат: размер и состав подборки. Максимум —
+нейтральная подсказка «анкета процессов влияет на доступность профилей»</td>
+</tr>
+<tr>
+<td><strong>6. Матрица видимости целиком</strong> — все три уровня с описаниями и
+условиями доступа</td>
+<td>Анонимно на лендинге <code>/</code> (<code>index.html</code>, 47–53) и кандидату в
+кабинете (<code>candidate_home.html</code>, 236–241)</td>
+<td>Раскрывает механизм сегментации рынка труда: любой работодатель заранее знает,
+какие ответы дают доступ к «топ ФСП». Кандидату по ТЗ положен только словесный уровень
+конкретной компании в приглашении, а не вся матрица</td>
+<td>Кандидату — собственная строка матрицы («ваш профиль виден организациям с
+развитыми процессами») и уровень конкретной компании в приглашении; полная матрица —
+во внутренней документации и правилах сервиса</td>
+</tr>
+<tr>
+<td><strong>7. Причина, почему профиль закрыт</strong> (<code>restricted_reason</code>,
+<code>visibility_note</code>): «профиль заполнен не полностью: …», «кандидат скрыл
+профиль из банка», «уровень профиля выше, чем доступен при текущем уровне организации
+процессов»</td>
+<td>Работодателю: банк (счётчик закрытых + замаскированные имена), страница потребности
+(<code>restricted_names</code>), карточка закрытого профиля
+<code>employer_candidate_restricted.html</code>, <code>_partial_candidate_card.html</code> (49)</td>
+<td>Третья формулировка фактически сообщает работодателю его собственный тир (обход
+запрета ТЗ 5.2) и раскрывает существование конкретных скрытых кандидатов. Причина
+«уровень профиля выше» читается как оценка компании и несёт репутационные и юридические
+риски (споры о дискриминации, претензии ФАС и трудовых инспекций)</td>
+<td>Нейтральное «Профиль недоступен» + агрегированный счётчик; подробности — только по
+обращению в службу поддержки. Замаскированные имена недоступных кандидатов не
+показываются</td>
+</tr>
+<tr>
+<td><strong>8. Перечень закрытых полей</strong> (<code>TIER_FIELDS</code> →
+<code>visible_fields</code>): «Вам доступны поля: …»</td>
+<td>Работодателю: <code>/employer</code>, <code>/employer/bank</code> (81),
+<code>/employer/vacancies/{id}</code> (111, 133)</td>
+<td>Показывает не только то, что открыто, но и чего работодатель лишён и как это
+«открыть» — то есть снова раскрывает тир и стимул манипулировать анкетой</td>
+<td>Показываются только реально открытые поля, без перечисления скрытых и без
+сравнения с другими уровнями</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h3>10.3. Демо-данные, аутентификация и техническая поверхность</h3>
+<table>
+<thead><tr><th style="width:20%">Что видно сейчас</th><th style="width:24%">Где именно</th><th style="width:29%">Почему в продукте закрыто</th><th>Что остаётся пользователю</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>9. Код подтверждения email прямо на экране</strong> (<code>demo_code</code>)
+и сноска <code>AUTH_DEMO_NOTE</code></td>
+<td>Всем, кто ввёл email: <code>/verify</code> (<code>verify.html</code>, 31), сноски в
+<code>login.html</code> (40) и в подвале каждой страницы (<code>base.html</code>, 64);
+код передаётся из маршрута <code>routers/auth.py:73</code></td>
+<td>Это полный обход аутентификации: любой, кто знает чужой email, входит в чужой
+кабинет. SMTP не подключён — заглушка существует только для демонстрации</td>
+<td>«Код отправлен на вашу почту» (или вход через ФСП ID / Keycloak / magic link).
+Код не отображается, не логируется и не возвращается в ответе</td>
+</tr>
+<tr>
+<td><strong>10. Демо-учётные записи и мок-реестр ФСП</strong>: 8 email вида
+<code>*@fsp.demo</code>, 9 учётных записей демо-стенда <code>seed.py</code> (6 кандидатов
+и 3 компании), 4 «демо-компании» с заданными сигналами, подсказки логинов на
+форме входа</td>
+<td>Анонимно: <code>/login</code> (<code>login.html</code>, 44–45 — chips
+artem.petrov@, anna.sokolova@; блок «Демо-вход» печатает учётные записи демо-стенда из
+<code>seed.demo_accounts()</code>), <code>/register/candidate/fsp</code>
+(<code>routers/registration.py:67</code> — <code>demo_emails=sorted(fsp_mock.FSP_REGISTRY)</code>);
+данные — <code>fsp_mock.py</code>, <code>employer_rating.RATING_MOCK</code>,
+<code>seed.py</code></td>
+<td>Публикация тестовых учёток и состава «истории ФСП» позволяет любому зайти под
+чужим демо-профилем и увидеть чужие достижения; в продукте данные приходят из
+официального реестра, а подсказки недопустимы</td>
+<td>Регистрация только по собственному email; история ФСП подтягивается из реестра по
+подтверждённой учётной записи</td>
+</tr>
+<tr>
+<td><strong>11. Демо-сертификат КИТ и сырой текст распознавания</strong>
+(<code>DEMO_CERTIFICATE_TEXT</code>, <code>kit_raw</code>, <code>kit_source</code>)</td>
+<td>Кандидату: шаг 3 регистрации и кабинет; <code>kit_block["raw"]</code> в
+<code>helpers.py</code> кладёт распознанный текст в контекст шаблонов</td>
+<td>Сырой текст распознавания — отладочная информация: по нему восстанавливаются
+правила парсера и подделывается «пройденная» проверка. Демо-сертификат позволяет
+получить верифицированный грейд без реальной проверки</td>
+<td>Только извлечённые поля (грейд, баллы, номер, дата) и статус проверки; при ошибке
+распознавания — предложение ввести данные вручную</td>
+</tr>
+<tr>
+<td><strong>12. Открытая техническая поверхность</strong>: Swagger UI
+<code>/api/docs</code>, OpenAPI-схема, <code>/health</code>, файл
+<code>database.db</code> в корне репозитория, путь к БД через <code>DATABASE_URL</code></td>
+<td>Всем без авторизации: <code>main.py</code> (<code>docs_url="/api/docs"</code>,
+маршрут <code>/health</code>); SQLite-файл с данными лежит рядом с кодом</td>
+<td>Публичная карта всех маршрутов и параметров облегчает подбор эндпоинтов и атаки;
+файл БД содержит персональные данные (ФИО, email, достижения) — его распространение
+нарушает 152-ФЗ; <code>/health</code> не должен раскрывать сведения о приложении</td>
+<td>Swagger отключён (<code>docs_url=None</code>) или доступен только во внутренней
+сети; <code>/health</code> — минимум данных для мониторинга; БД — на защищённом томе с
+резервными копиями, в репозитории её нет</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h3>10.4. Рейтинг компании, модерация и барометр амбиций</h3>
+<table>
+<thead><tr><th style="width:20%">Что видно сейчас</th><th style="width:24%">Где именно</th><th style="width:29%">Почему в продукте закрыто</th><th>Что остаётся пользователю</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>13. Рейтинг компании: сырые сигналы и арифметика</strong> — число тендеров,
+наличие в реестре отечественного ПО, средняя оценка сотрудников, разрыв зарплат
+топ-менеджмента и инженеров, коэффициенты формулы, сноска <code>RATING_DEMO_NOTE</code></td>
+<td>Кандидату: карточка потребности (<code>_partial_vacancy_card.html</code>, 44),
+<code>/needs/{id}</code> (<code>need_detail.html</code>, 49), приглашение,
+<code>register_employer_profile.html</code> (82), лендинг (75); расчёт —
+<code>employer_rating.company_rating()</code></td>
+<td>В MVP сигналы — заглушка (для недемо-компаний детерминированно из MD5-хеша
+названия), то есть цифра не отражает реальность. В продукте сигналы парсятся из
+открытых источников, а методика становится внутренним регламентом: её публикация ведёт
+к накрутке отзывов и тендеров и к юридическим рискам — оценка компании с указанием
+«разрыва зарплат» без верифицированных источников может быть оспорена как
+недостоверная информация</td>
+<td>Итоговая метка («высокий / средний / низкий уровень») и, при необходимости, ссылки
+на первоисточники. Объяснение — по запросу в поддержку, без коэффициентов</td>
+</tr>
+<tr>
+<td><strong>14. Словарь «красных флагов»</strong> — 13 триггерных формулировок
+(<code>RED_FLAG_MARKERS</code>) и список замечаний к профилю
+(<code>red_flags()</code>)</td>
+<td>Кандидату: страница потребности и кабинет
+(<code>candidate_home.html</code>, 65–68); работодатель видит отметки в описании своей
+потребности</td>
+<td>Публикация словаря модерации позволяет обойти фильтр переформулировками; показ
+«замечаний к своему профилю» в текущих формулировках дублирует внутренние правила
+ранжирования (грейд не подтверждён, 0 баллов ФСП, меньше двух флагов барометра)</td>
+<td>Факт проверки: «вакансия проверена модератором» / «требуются уточнения в профиле»
+и конкретное действие для пользователя (загрузить сертификат, заполнить поле) — без
+списка триггеров</td>
+</tr>
+<tr>
+<td><strong>15. Барометр амбиций: флаги и порог</strong> — 4 формулировки
+(<code>AMBITIONS</code>), текст «Барометр амбиций: N из 4 флагов (порог — 2)…»</td>
+<td>Анонимно на лендинге (<code>index.html</code>, 31–37), кандидату на шаге 1
+регистрации и в кабинете (<code>ambitions_note</code>)</td>
+<td>Раскрывает, какие именно ответы делают профиль «амбициозным», а это влияет на
+видимость работодателям (строка матрицы «новичок с амбициями» требует тир 2).
+Пользователь начинает отвечать не честно, а «на нужный результат» — анкета теряет
+смысл, как и анкета работодателя</td>
+<td>Вопросы без подсказок о пороге; кандидату — только вердикт («амбициозный профиль»)
+и возможность его уточнить</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section>
+<h3>10.5. Административные процессы и эксплуатация</h3>
+<table>
+<thead><tr><th style="width:20%">Как устроено сейчас</th><th style="width:24%">Где именно</th><th style="width:29%">Почему в продукте иначе</th><th>Что появляется в продукте</th></tr></thead>
+<tbody>
+<tr>
+<td><strong>16. Администрирование = доступ к коду и файлу БД.</strong> Ролей
+«администратор» и «модератор» нет; таблицы создаются
+<code>SQLModel.metadata.create_all</code>; данные наполняются моками; правки — вручную
+через SQLite</td>
+<td><code>database.py</code> (<code>init_db</code>), <code>fsp_mock.py</code>,
+<code>employer_rating.py</code>, файл <code>database.db</code> в корне проекта</td>
+<td>В продукте любая правка данных должна быть учтена и обоснована: без журнала
+действий невозможно расследовать инцидент, ответить на претензию кандидата или
+подтвердить корректность ранжирования. Ручные правки БД недопустимы</td>
+<td>Админ-панель с ролями, журнал аудита (кто, что, когда изменил), миграции схемы
+(Alembic), резервные копии, разделение dev / stage / prod-окружений</td>
+</tr>
+<tr>
+<td><strong>17. Служебные поля и внутренняя механика в контексте страниц</strong>:
+<code>fsp_demo</code>, <code>kit_source</code>, <code>specialization_manual</code>,
+<code>grade_override</code>, <code>is_new</code>, <code>last_visit_at</code>,
+<code>consent</code>, <code>visible_in_bank</code>; flash base64-JSON в cookie;
+редиректы 303</td>
+<td><code>web.py</code> (<code>render()</code>, <code>flash()</code>),
+<code>helpers.py</code>, шаблоны; видно в DevTools и в исходном коде страницы</td>
+<td>Само по себе не секрет, но в продукте служебные данные не должны попадать в HTML и
+логи: по ним восстанавливается внутреннее устройство, а лишние поля в контексте —
+типичная причина утечек (в карточке кандидата уже лежат <code>real_name</code> и
+<code>email</code>)</td>
+<td>Минимальный контекст шаблонов (DTO вместо «всего объекта»), отдельные view-модели
+без служебных полей, cookie с флагами <code>Secure</code> и <code>SameSite</code>,
+фильтрация чувствительных полей из логов</td>
+</tr>
+<tr>
+<td><strong>18. Нет продуктивных средств защиты и сопровождения</strong>: без
+ограничения частоты запросов и капчи на <code>/login</code> и <code>/verify</code>, без
+лимитов приглашений и откликов, без модерации текстов, без email-уведомлений, без
+хранения текста согласия 152-ФЗ (только <code>consent: bool</code>), без механизма
+удаления профиля по требованию</td>
+<td>Отсутствует в коде: <code>routers/auth.py</code>,
+<code>routers/employer.py</code>, <code>routers/candidate.py</code></td>
+<td>Шестизначный код с TTL 15 минут без ограничения попыток перебирается; массовая
+рассылка приглашений превращает платформу в спам; согласие на обработку ПДн должно
+храниться как артефакт (версия текста, дата, IP), а у пользователя должно быть право
+на удаление данных</td>
+<td>Rate limit и блокировка после N попыток, капча, суточные лимиты действий,
+премодерация вакансий и сообщений, email-уведомления, реестр согласий, процедура
+удаления и обезличивания профиля, мониторинг и алерты</td>
+</tr>
+</tbody>
+</table>
+
+<h3>10.6. Почему это закрывается: пять причин</h3>
+<ol>
+  <li><strong>Коммерческая тайна и защита от гейминга.</strong> Веса, пороги и
+  коэффициенты — ядро продукта. Как только формула публична, пользователи
+  оптимизируют анкеты под неё, а не отражают реальность: подборка теряет ценность.</li>
+  <li><strong>Персональные данные (152-ФЗ).</strong> ФИО, email, город, достижения и
+  распознанный текст сертификата — ПДн. Демонстрационные механизмы (код на экране,
+  демо-учётки, файл БД в репозитории, сырой текст распознавания) в продукте
+  недопустимы: нужны минимизация данных, защищённое хранение, реестр согласий и право
+  на удаление.</li>
+  <li><strong>Юридические и репутационные риски.</strong> Сообщения вида «уровень
+  профиля выше, чем доступен при текущем уровне организации процессов» и публичный
+  рейтинг с «разрывом зарплат» — оценочные суждения о компании и о кандидате. Без
+  верифицированных источников и закрытой методики это повод для претензий и судов.</li>
+  <li><strong>Требование ТЗ.</strong> Раздел 5.2 прямо запрещает показывать
+  работодателю его тир — ни цифрой, ни словами; категории ФСП и рейтинг предназначены
+  только кандидату. Демонстрационная сборка эти границы намеренно раздвигает, и это
+  надо закрывать до продуктивного релиза.</li>
+  <li><strong>Безопасность.</strong> Открытый Swagger, показ кода подтверждения,
+  отсутствие rate limit и модерации — демонстрационные удобства, которые в продукте
+  становятся векторами атаки и спама.</li>
+</ol>
+<div class="box box-note">
+<span class="t">Что сознательно остаётся открытым и в продукте</span>
+<p>Прозрачность правил <em>для пользователя</em> сохраняется там, где она полезна и
+безопасна: обязательная вилка зарплаты; факт верификации грейда сертификатом КИТ;
+состав открытых полей карточки; словесный уровень процессов компании в приглашении
+кандидата; статусы приглашений и откликов; правило раскрытия контактов только после
+принятия приглашения; возможность скрыть свой профиль из банка; объяснение
+релевантности в человеческих формулировках — но без весов, порогов и коэффициентов.</p>
+</div>
+</section>
+<section class="chapter">
+<h2>11. Известные отличия реализации от ТЗ и ограничения MVP</h2>
+<h3>11.1. Отличия от ТЗ</h3>
+<table>
+<thead><tr><th style="width:6%">№</th><th style="width:30%">Отличие</th><th>Пояснение и влияние</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>Employer.tier</code> хранится в БД</td><td>ТЗ 5.2 требует не хранить тир и считать его на лету. В реализации значение сохраняется при каждом сохранении анкеты (<code>services.apply_employer_survey</code>) и пересчитывается из <code>survey_answers</code>, поэтому расхождения с ответами не возникает, но формально поле в схеме есть.</td></tr>
+<tr><td>2</td><td>Работодатель видит свой уровень процессов словами</td><td>Отступление от ТЗ 5.2 сделано сознательно для демонстрации — закрывается в продукте (глава 10, п. 5).</td></tr>
+<tr><td>3</td><td>Имена полей вакансии</td><td>ТЗ: <code>salary_from</code>/<code>salary_to</code>, <code>is_published</code>. Реализация: <code>salary_min</code>/<code>salary_max</code>, <code>open</code>. Добавлены <code>grade_match</code>, <code>city</code>, <code>team_size</code>, <code>company</code>, <code>is_new</code>.</td></tr>
+<tr><td>4</td><td>Таблица <code>achievement</code> не является источником данных</td><td>Достижения берутся из мок-реестра по email (<code>fsp_mock.get_achievements</code>). Таблица создана по ТЗ 5.4 и готова к заполнению при подключении реестра ФСП.</td></tr>
+<tr><td>5</td><td>Двусторонняя механика</td><td>Кроме приглашений работодателя реализованы банк потребностей <code>/needs</code> и отклики кандидата (<code>Application</code>) — расширение разделов 5.6 и 10.3 ТЗ.</td></tr>
+<tr><td>6</td><td>Список специализаций шире</td><td>Добавлены <code>mobile</code> и <code>embedded</code> (робототехника/БАС) сверх перечня ТЗ — под дисциплины ФСП.</td></tr>
+<tr><td>7</td><td>Нет Docker</td><td>ТЗ 3 предполагает «один <code>docker-compose up</code>». В репозитории нет Dockerfile и compose-файла; запуск — через <code>uvicorn</code> (глава 12).</td></tr>
+<tr><td>8</td><td>Тесты — только смоук-набор</td><td>В <code>tests/</code> перенесены три smoke-сценария (63 проверки pytest: маршруты и guard-функции, строгий рендер шаблонов, сквозной сценарий работодателя). Юнит-покрытия <code>logic.py</code> (формул релевантности, матрицы видимости, грейдов) и CI нет — это пункт P2 главы 13.</td></tr>
+<tr><td>9</td><td>Стили</td><td>Используется локальный <code>pico.min.css</code> + собственный <code>app.css</code>. Каталог <code>tailwindcss/</code> и файл <code>static/css/TZ</code> — неиспользуемые артефакты (49 и 0 байт).</td></tr>
+<tr><td>10</td><td>Время и сессии</td><td>Метки времени — строки ISO-8601 UTC, а не тип <code>datetime</code>. Сессии хранятся в таблице БД, а не в JWT; код подтверждения не хешируется.</td></tr>
+<tr><td>11</td><td>Верификация как свойство</td><td>В ТЗ <code>is_verified</code> — поле; в реализации — производное свойство из <code>kit_connected</code> и данных сертификата, что исключает рассинхронизацию.</td></tr>
+<tr><td>12</td><td>Рейтинг недемо-компаний</td><td>Для компаний вне списка <code>RATING_MOCK</code> сигналы детерминированно вычисляются из MD5-хеша названия: повторяемо, но содержательно бессмысленно — до подключения внешних источников.</td></tr>
+</tbody>
+</table>
+<h3>11.2. Ограничения MVP</h3>
+<ul>
+  <li>Нет уведомлений (email, пуш): о приглашении и отклике пользователь узнаёт только
+  в кабинете; счётчик «новых» считается по <code>last_visit_at</code>.</li>
+  <li>Нет чата и вложений: коммуникация — одно сообщение в приглашении/отклике.</li>
+  <li>Нет поиска по банку кроме фильтра по специализации; нет пагинации — записи
+  выбираются в память целиком (<code>list_candidates</code> и др.).</li>
+  <li>Нет модерации текстов, жалоб, блокировок пользователей.</li>
+  <li>Нет логирования, метрик, экспорта данных, интернационализации.</li>
+  <li>SQLite в одном файле с <code>check_same_thread=False</code>: приемлемо для сотен
+  записей, не рассчитано на высокую параллельную нагрузку.</li>
+</ul>
+</section>
+<section class="chapter">
+<h2>12. Запуск, проверка и демо-данные</h2>
+<h3>12.1. Установка и запуск</h3>
+<pre><code># 1. Окружение (Python 3.13)
+python3.13 -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Запуск: таблицы создаются при старте, пустая база заполняется демо-стендом
+uvicorn main:app --reload
+#   → http://127.0.0.1:8000
+
+# 3. Необязательно: другой файл/путь БД
+export DATABASE_URL=sqlite:///database.db
+
+# 4. Демо-стенд вручную: отчёт о составе либо полная пересборка
+python3.13 seed.py
+python3.13 seed.py --force</code></pre>
+<p>Проверка готовности: <code>GET /health</code> → <code>{"status":"ok","app":"ФСП
+«спец. трек»"}</code>. Документация API в демо-сборке открыта на <code>/api/docs</code>
+(в продукте закрывается — глава 10, п. 12).</p>
+
+<h3>12.2. Демо-вход и демо-данные</h3>
+<table>
+<thead><tr><th style="width:26%">Что</th><th>Как получить в демо-сборке</th></tr></thead>
+<tbody>
+<tr><td>Вход</td><td>Любой корректный email и роль; код подтверждения показывается на
+странице <code>/verify</code>. SMTP не подключён.</td></tr>
+<tr><td>История ФСП</td><td>Email из мок-реестра <code>fsp_mock.FSP_REGISTRY</code>:
+<span class="mono">artem.petrov@ · anna.sokolova@ · mark.ivanov@ · olga.smirnova@ ·
+sergey.orlov@ · maria.lebedeva@ · nikita.zaitsev@ · sofia.morozova@</span> (домен
+<code>fsp.demo</code>). Любой другой email — сценарий «истории ФСП нет»: 0 баллов,
+категория D.</td></tr>
+<tr><td>Сертификат КИТ</td><td>Сохранить текст <code>kit_parser.DEMO_CERTIFICATE_TEXT</code>
+в файл <code>kit.txt</code> и загрузить на шаге 3 регистрации или в кабинете
+(<code>POST /candidate/kit</code>). Распознаются грейд Senior, 84 балла, специальность
+«техническая поддержка» → support.</td></tr>
+<tr><td>Демо-компании рейтинга</td><td>ТехКорп, Вектор Софт, ПромТех Групп, ОлдЛайн —
+сигналы заданы явно в <code>employer_rating.RATING_MOCK</code>.</td></tr>
+<tr><td>Демо-стенд (<code>seed.py</code>)</td><td>Заполняет пустую базу один раз при
+старте приложения (<code>lifespan</code> → <code>seed.ensure_demo_data</code>):
+6 кандидатов (топ ФСП, крепкий мидл, амбициозный новичок, новичок без амбиций, кандидат
+без истории ФСП, junior без сертификата), 3 работодателя тиров 3/2/1, 4 потребности и
+2 приглашения (<code>accepted</code> и <code>sent</code>). Анкеты создаются штатными
+сервисами, поэтому грейд, специализация, амбициозность, категория ФСП и тир
+рассчитываются правилами приложения, а не записываются вручную. Пересборка стенда —
+<code>python3.13 seed.py --force</code>. Доступы:
+<span class="mono">artem.petrov@ · anna.sokolova@ · mark.ivanov@ · maria.lebedeva@
+(fsp.demo), egor.timofeev@ · pavel.kulagin@ (demo.local), hr@progress-soft.demo ·
+hr@stabilit.demo · hr@fast-dev.demo</span> — этот же список выводится на
+<code>/login</code> из <code>seed.demo_accounts()</code>.</td></tr>
+<tr><td>Состояние БД на момент черновика</td><td><code>database.db</code> заполнен
+демо-стендом: 6 кандидатов, 3 работодателя, 4 потребности, 2 приглашения, 0 откликов и
+0 сессий. Пересобрать стенд — <code>python3.13 seed.py --force</code>; если файл удалить,
+таблицы и демо-набор создадутся заново при следующем старте приложения.</td></tr>
+</tbody>
+</table>
+
+<h3>12.3. Проверки, выполненные перед выпуском черновика</h3>
+<table>
+<thead><tr><th style="width:40%">Проверка</th><th style="width:18%">Результат</th><th>Что гарантирует</th></tr></thead>
+<tbody>
+<tr><td>Компиляция всех модулей Python</td><td>OK</td><td>Нет синтаксических ошибок и битых импортов.</td></tr>
+<tr><td>Компиляция шаблонов Jinja2</td><td>30 шаблонов</td><td>Все шаблоны парсятся, наследование корректно.</td></tr>
+<tr><td>Обход GET-маршрутов</td><td>24 пути / 72 запроса</td><td>Каждый путь проверен для анонима, кандидата и работодателя: нет 500, доступ закрыт редиректом 303.</td></tr>
+<tr><td>Рендер всех страниц при <code>StrictUndefined</code></td><td>OK</td><td>В шаблонах не осталось необъявленных переменных — «тихих» пропусков контекста нет.</td></tr>
+<tr><td>Изоляция ролей</td><td>OK</td><td>Кандидат не получает 200 на <code>/employer/*</code>, работодатель — на <code>/candidate/*</code> и <code>/needs/*</code>; аноним на приватных путях редиректится на <code>/login</code>.</td></tr>
+<tr><td>Сквозной сценарий работодателя</td><td>20 проверок</td><td>Анкета → тир → банк → потребность → приглашение → смена статусов → раскрытие контактов проходят без ошибок.</td></tr>
+<tr><td>Демо-стенд (<code>tests/test_seed.py</code>)</td><td>17 проверок</td><td>Состав стенда, матрица видимости по тирам (тир 3 → 6 анкет, тир 2 → 5, тир 1 → 2), тиры из ответов анкеты, ранжирование под потребности, идемпотентность сида и пересборка <code>--force</code>.</td></tr>
+<tr><td>Специализация по КИТ (<code>tests/test_kit_specialization.py</code>)</td><td>15 проверок</td><td>Специализация определяется по полю специальности сертификата, а не по всему тексту документа: шапка «Прошел(а) тестирование …» больше не уводит анкету в QA; приоритет КИТ → ФСП → стек → ручной выбор сохранён.</td></tr>
+<tr><td>Итог <code>pytest</code></td><td>95 passed</td><td>Весь набор <code>tests/</code> зелёный на Python 3.13; каждый модуль проходит и по отдельности.</td></tr>
+</tbody>
+</table>
+<p>Проверки перенесены из разовых smoke-скриптов в каталог <code>tests/</code> и
+запускаются через <code>pytest</code>. Тесты работают на временной копии базы
+(<code>DATABASE_URL</code> выставляется в <code>tests/conftest.py</code> до импорта
+приложения), поэтому <code>database.db</code> из репозитория не изменяется — состояние
+стенда, описанное в п. 12.2, остаётся прежним.</p>
+
+<h3>12.4. Как повторить проверки</h3>
+<p class="small">Команды предполагают активированное окружение <code>.venv</code>.
+Системный <code>python3</code> зависимостей не содержит — поэтому явно указан
+<code>python3.13</code> (если его нет в PATH, подставьте полный путь к
+интерпретатору).</p>
+<pre><code># компиляция модулей
+python3.13 -m compileall -q .
+
+# весь смоук-набор (testpaths = tests задан в pytest.ini)
+python3.13 -m pytest
+
+# отдельные сценарии
+python3.13 -m pytest tests/test_smoke_routes.py -v         # маршруты, шаблоны, guard-функции
+python3.13 -m pytest tests/test_smoke_strict.py -v         # строгий рендер всех страниц
+python3.13 -m pytest tests/test_smoke_employer_flow.py -v  # сквозной сценарий работодателя
+python3.13 -m pytest tests/test_seed.py -v                 # демо-стенд: состав, видимость, ранжирование
+python3.13 -m pytest tests/test_kit_specialization.py -v   # специализация по сертификату КИТ
+python3.13 -m pytest -k invite                             # только приглашения и контакты
+
+# демо-стенд: отчёт о составе и пересборка
+python3.13 seed.py
+python3.13 seed.py --force</code></pre>
+
+<h3>12.5. Пересборка этого PDF</h3>
+<pre><code>bash docs/build_pdf.sh      # documentation.html → FSP-documentation.pdf (headless Chrome)</code></pre>
+</section>
+<section class="chapter">
+<h2>13. Чек-лист вывода в продакшн</h2>
+<table>
+<thead><tr><th style="width:7%">Приоритет</th><th style="width:33%">Задача</th><th style="width:26%">Где менять</th><th>Критерий приёмки</th></tr></thead>
+<tbody>
+<tr><td><strong>P0</strong></td><td>Убрать показ кода подтверждения; подключить SMTP либо ФСП ID / Keycloak</td><td><code>routers/auth.py</code> (передача <code>demo_code</code>), <code>verify.html</code>, <code>content.AUTH_DEMO_NOTE</code></td><td>Код не встречается в HTML, ответах и логах; вход возможен только через почту/ФСП ID</td></tr>
+<tr><td><strong>P0</strong></td><td>Скрыть тир от работодателя (требование ТЗ 5.2)</td><td><code>routers/employer.py</code>; шаблоны <code>employer_home.html</code>, <code>employer_bank.html</code>, <code>vacancy_detail.html</code>, <code>register_employer_survey.html</code>, <code>employer_candidate_restricted.html</code></td><td>Ни цифры, ни словесного уровня, ни <code>TIER_DESCRIPTIONS</code> в кабинете работодателя</td></tr>
+<tr><td><strong>P0</strong></td><td>Заменить причины закрытия профиля нейтральными; убрать замаскированные имена недоступных кандидатов</td><td><code>logic.restricted_reason</code>, <code>candidate_visible_profile</code>, <code>helpers.bank_rows</code>, <code>helpers.vacancy_candidates</code>, шаблоны карточек</td><td>Работодатель видит «Профиль недоступен» и агрегированный счётчик, без указания уровня процессов</td></tr>
+<tr><td><strong>P0</strong></td><td>Убрать веса и арифметику релевантности из интерфейса</td><td><code>web.py</code> (глобал <code>MATCH_WEIGHTS</code>), <code>vacancy_detail.html</code>, <code>_partial_match.html</code></td><td>Пользователь видит процент и человеческие причины; числа весов и штрафов отсутствуют</td></tr>
+<tr><td><strong>P0</strong></td><td>Закрыть техническую поверхность: Swagger, <code>/health</code>, файл БД в репозитории, демо-учётки и подсказки логинов</td><td><code>main.py</code> (<code>docs_url</code>), <code>login.html</code>, <code>routers/registration.py</code> (<code>demo_emails</code>), <code>.gitignore</code> (создан: кеш Python, <code>.venv</code>, <code>.pytest_cache</code>; <code>database.db</code> пока не исключён)</td><td><code>/api/docs</code> недоступен извне; <code>database.db</code> не в репозитории; подсказок демо-логинов нет</td></tr>
+<tr><td><strong>P0</strong></td><td>Rate limit и блокировка после N попыток на <code>/login</code> и <code>/verify</code>; хеширование кода</td><td><code>auth.py</code>, <code>routers/auth.py</code></td><td>Перебор кода невозможен; в БД хранится хеш кода, а не значение</td></tr>
+<tr><td><strong>P1</strong></td><td>Подключить реестр ФСП вместо мока; писать достижения в таблицу <code>achievement</code></td><td><code>fsp_mock.py</code>, <code>services.connect_fsp</code>, <code>helpers.fsp_block</code></td><td>Баллы и категория приходят из реестра; <code>FSP_DEMO_NOTE</code> удалена</td></tr>
+<tr><td><strong>P1</strong></td><td>Подключить внешние источники рейтинга и закрыть методику</td><td><code>employer_rating.py</code>, <code>_partial_vacancy_card.html</code>, <code>need_detail.html</code></td><td>Сигналы берутся из верифицированных источников; пользователю показана только метка</td></tr>
+<tr><td><strong>P1</strong></td><td>Верификация сертификата КИТ через API центра оценки; не показывать <code>kit_raw</code></td><td><code>kit_parser.py</code>, <code>services.apply_kit</code>, <code>helpers.kit_block</code></td><td>Грейд подтверждается запросом к провайдеру; сырой текст распознавания не в интерфейсе</td></tr>
+<tr><td><strong>P1</strong></td><td>Cookie <code>Secure</code> + HTTPS, хранение согласий 152-ФЗ как артефакта, процедура удаления профиля</td><td><code>web.py</code> (<code>set_cookie</code>), <code>models.py</code>, <code>routers/candidate.py</code></td><td>Сессия только по HTTPS; есть версия текста согласия, дата и IP; удаление профиля работает</td></tr>
+<tr><td><strong>P1</strong></td><td>Журнал аудита и роль модератора; премодерация вакансий и сообщений</td><td>новый модуль + <code>routers/employer.py</code></td><td>Действия пользователей и модераторов логируются; публикация только после проверки</td></tr>
+<tr><td><strong>P2</strong></td><td>Миграции схемы (Alembic), Dockerfile и docker-compose (требование ТЗ 3), бэкапы, мониторинг</td><td>корень репозитория, <code>database.py</code></td><td>Подъём стенда одной командой; схема меняется миграциями; есть копии и алерты</td></tr>
+<tr><td><strong>P2</strong></td><td>CI и юнит-покрытие <code>logic.py</code> (смоук-набор уже перенесён в <code>tests/</code>)</td><td>CI-конфигурация, <code>tests/</code></td><td><code>pytest</code> прогоняется в CI на каждый коммит; формулы релевантности, матрица видимости и правила грейдов покрыты юнит-тестами</td></tr>
+<tr><td><strong>P2</strong></td><td>Пагинация банка и подборок, суточные лимиты приглашений и откликов, уведомления на email</td><td><code>helpers.py</code>, <code>routers/employer.py</code>, <code>routers/candidate.py</code></td><td>Списки постраничные; лимиты действуют; пользователь получает уведомления</td></tr>
+</tbody>
+</table>
+<p class="small">Порядок работ: сначала P0 (безопасность, персональные данные и
+закрытие служебной информации), затем интеграции P1, затем инфраструктура P2. Пункты
+P0 соответствуют пунктам 1–12 главы 10.</p>
+</section>
+<section class="chapter">
+<h2>14. Приложение: справочник констант</h2>
+<table>
+<thead><tr><th style="width:30%">Константа</th><th style="width:16%">Где определена</th><th>Значение и назначение</th></tr></thead>
+<tbody>
+<tr><td class="mono">MATCH_WEIGHTS</td><td>logic.py</td><td>specialization 35, stack 25, grade 20, verified 10, fsp 10 — веса релевантности (сумма 100).</td></tr>
+<tr><td class="mono">MATCH_FSP_POINTS</td><td>logic.py</td><td>S 10, A 9, B 7, C 5, D 2 — баллы категории ФСП внутри критерия «история ФСП».</td></tr>
+<tr><td class="mono">AMBITIONS, AMBITION_THRESHOLD</td><td>logic.py</td><td>4 флага барометра; порог вердикта «амбициозный профиль» — 2.</td></tr>
+<tr><td class="mono">TIER_LABELS</td><td>logic.py</td><td>3 — «развитые процессы», 2 — «базовые процессы», 1 — «начальные процессы» (формулировки для кандидата).</td></tr>
+<tr><td class="mono">TIER_DESCRIPTIONS</td><td>logic.py</td><td>Расшифровка уровней с указанием доступности банка; в демо видна всем — закрывается в продукте.</td></tr>
+<tr><td class="mono">TIER_FIELDS</td><td>logic.py</td><td>Состав полей карточки кандидата для тиров 1 / 2 / 3.</td></tr>
+<tr><td class="mono">TIER_QUESTIONS</td><td>logic.py</td><td>Порядок полей анкеты: q1_lead_time … q6_benefits; <code>tier_score</code> = число истинных ответов.</td></tr>
+<tr><td class="mono">GRADE_MATCH_MODES, DEFAULT_GRADE_MATCH_MODE</td><td>logic.py</td><td>exact / plus_minus / any; по умолчанию plus_minus.</td></tr>
+<tr><td class="mono">PROFILE_REQUIRED_FIELDS</td><td>logic.py</td><td>Имя, специализация, роль в команде, формат работы; плюс согласие 152-ФЗ.</td></tr>
+<tr><td class="mono">RED_FLAG_MARKERS</td><td>logic.py</td><td>13 маркеров сомнительных формулировок вакансии.</td></tr>
+<tr><td class="mono">CONTACT_REVEAL_NOTE</td><td>logic.py</td><td>Единственное правило раскрытия ФИО и контактов — после принятия приглашения.</td></tr>
+<tr><td class="mono">FSP_CATEGORY_THRESHOLDS</td><td>fsp_mock.py</td><td>150 → S, 100 → A, 60 → B, 30 → C, иначе D.</td></tr>
+<tr><td class="mono">FSP_REGISTRY</td><td>fsp_mock.py</td><td>8 тестовых участников с достижениями; источник баллов ФСП в MVP.</td></tr>
+<tr><td class="mono">RATING_MOCK</td><td>employer_rating.py</td><td>Сигналы 4 демо-компаний: тендеры, реестр ПО, отзывы, разрыв зарплат.</td></tr>
+<tr><td class="mono">DEMO_CERTIFICATE_TEXT</td><td>kit_parser.py</td><td>Пример сертификата КИТ из раздела 8.1 ТЗ — для демо-загрузки и проверок.</td></tr>
+<tr><td class="mono">SESSION_TTL_DAYS, CODE_TTL_MINUTES</td><td>web.py</td><td>7 дней и 15 минут — сроки жизни сессии и кода подтверждения.</td></tr>
+<tr><td class="mono">SESSION_COOKIE, FLASH_COOKIE</td><td>web.py</td><td><code>fsp_session</code>, <code>fsp_flash</code>.</td></tr>
+<tr><td class="mono">FSP_DEMO_NOTE, AUTH_DEMO_NOTE, RATING_DEMO_NOTE</td><td>content.py</td><td>Сноски честности о мок-данных; в продукте удаляются вместе с моками.</td></tr>
+<tr><td class="mono">EMPLOYER_SURVEY, CANDIDATE_BAROMETER</td><td>content.py</td><td>Формулировки вопросов анкет — нейтральные, без подсказки «правильного» ответа.</td></tr>
+<tr><td class="mono">SPECIALIZATIONS, GRADES, TEAM_ROLES, FSP_ROLES, WORK_FORMATS, VACANCY_FORMATS, FSP_CATEGORY_TITLES</td><td>logic.py</td><td>Справочники для форм и карточек.</td></tr>
+</tbody>
+</table>
+<footer class="end">
+<p><strong>ФСП «спец. трек»</strong> · черновик документации v0.9 · октябрь 2026 г.
+Документ описывает текущую демонстрационную сборку: перечень расхождений с продуктовым
+поведением — глава 10, план закрытия — глава 13. Источник требований:
+<code>TZ.txt</code> и «ФСП спец. трек ТЗ.pdf» в корне репозитория.</p>
+</footer>
+</section>
+</body>
+</html>

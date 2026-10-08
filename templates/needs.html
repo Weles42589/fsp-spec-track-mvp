@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{# Банк потребностей работодателя глазами кандидата (разделы 10.2, 10.5, 13.3). #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Банк потребностей</h1>
+        <p class="small muted">{{ rows | length }} открытых потребностей ·
+            специализация {{ specialization_title }} · грейд {{ grade_title }}</p>
+    </div>
+    <div class="actions">
+        <a href="/candidate" role="button" class="small secondary">Кабинет</a>
+        <a href="/candidate/applications" role="button" class="small">Мои отклики</a>
+    </div>
+</div>
+
+<p class="note">Порядок — по релевантности вашему профилю. Оценка считается из
+    специализации, стека, грейда, верификации КИТ и истории ФСП; критерии раскрываются
+    в каждой карточке.</p>
+
+{% if rows %}
+    <div class="grid-2">
+        {% for row in rows %}
+            <article class="card{% if row.card.is_new %} is-new{% endif %}">
+                {% set card = row.card %}
+                {% include "_partial_vacancy_card.html" %}
+                <div class="card-foot">
+                    <a href="/needs/{{ card.id }}" role="button" class="small">Подробнее</a>
+                    {% if row.applied %}
+                        <span class="badge badge-sent">отклик отправлен</span>
+                    {% else %}
+                        <form action="/needs/{{ card.id }}/apply" method="post">
+                            <button type="submit" class="small">Откликнуться</button>
+                        </form>
+                    {% endif %}
+                    <span class="tiny muted">{{ row.employer.company if row.employer else card.company }}</span>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="flash flash-info">
+        Открытых потребностей нет. Загляните позже — или проверьте, что ваш профиль
+        заполнен полностью и открыт в банке.
+    </div>
+{% endif %}
+{% endblock %}

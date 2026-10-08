@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{# Профиль кандидата глазами работодателя (разделы 6.7, 8, 11.15): состав полей задан
+   тиром, ФИО и контакты не раскрываются до принятия приглашения.
+   Контекст: employer, candidate, profile, full (только tier 3), tier_label (строка),
+   visible_fields, vacancies, red_flags. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>{{ profile.name }}</h1>
+        <p class="small muted">{{ profile.specialization_title }} · {{ profile.grade_title }}
+            {% if profile.city %} · {{ profile.city }}{% endif %}</p>
+    </div>
+    <div class="actions">
+        {% if profile.verified %}
+            <span class="badge badge-accepted">грейд верифицирован КИТ</span>
+        {% else %}
+            <span class="badge badge-viewed">грейд заявлен кандидатом</span>
+        {% endif %}
+        {% if profile.is_ambitious %}<span class="badge badge-new">амбициозный профиль</span>{% endif %}
+        <span class="badge badge-count">{{ profile.profile_level }}</span>
+        <a href="/employer/bank" role="button" class="small secondary">К банку кандидатов</a>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div>
+        <section class="block">
+            <h2>Профиль</h2>
+            <article class="card">
+                <dl class="kv">
+                    <dt>Специализация</dt>
+                    <dd>{{ profile.specialization_title }}</dd>
+                    <dt>Грейд</dt>
+                    <dd>{{ profile.grade_title }}
+                        <span class="tiny muted">{{ profile.grade_note }}</span></dd>
+                    <dt>Баллы КИТ</dt>
+                    <dd>{% if profile.kit_score %}{{ profile.kit_score }} из 100
+                        {% else %}<span class="tiny muted">не указаны</span>{% endif %}</dd>
+                    <dt>Категория ФСП</dt>
+                    <dd>{{ profile.fsp_category_title }} · {{ profile.fsp_score }} баллов</dd>
+                    <dt>Город</dt>
+                    <dd>{% if profile.city %}{{ profile.city }}
+                        {% else %}<span class="field-locked">недоступен при вашем уровне процессов</span>{% endif %}</dd>
+                    <dt>Роль в команде ФСП</dt>
+                    <dd>{% if profile.fsp_role %}{{ profile.fsp_role | capitalize }}
+                        {% else %}<span class="field-locked">недоступна при вашем уровне процессов</span>{% endif %}</dd>
+                    <dt>Амбициозность</dt>
+                    <dd>{% if profile.ambition_hidden %}
+                            <span class="field-locked">недоступна при вашем уровне процессов</span>
+                        {% elif profile.is_ambitious %}да: два и более флагов барометра
+                        {% else %}нет: меньше двух флагов барометра{% endif %}</dd>
+                </dl>
+
+                {% if profile.stack %}
+                    <p class="small muted">Стек:</p>
+                    <ul class="chips">
+                        {% for item in profile.stack %}
+                            <li class="chip">{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <p class="tiny muted">{{ profile.visibility_note }}</p>
+            </article>
+        </section>
+        {% if full %}
+            <section class="block">
+                <h2>Сертификат КИТ</h2>
+                <article class="card">
+                    {% if full.kit.connected %}
+                        <div class="card-head">
+                            <h3>{{ grade_title(full.kit.grade_from_certificate) }}</h3>
+                            <span class="badge badge-accepted">верифицирован</span>
+                        </div>
+                        <dl class="kv">
+                            <dt>Номер сертификата</dt>
+                            <dd>{{ full.kit.certificate_number or '—' }}</dd>
+                            <dt>Соревнование</dt>
+                            <dd>{{ full.kit.competition or '—' }}</dd>
+                            <dt>Место</dt>
+                            <dd>{{ full.kit.place_text }}</dd>
+                            <dt>Дата сертификата</dt>
+                            <dd>{{ candidate.kit_date or '—' }}</dd>
+                            <dt>Баллы КИТ</dt>
+                            <dd>{% if candidate.kit_score %}{{ candidate.kit_score }} из 100
+                                {% else %}—{% endif %}</dd>
+                            <dt>Итоговый грейд</dt>
+                            <dd>{{ full.grade_title }}
+                                <span class="tiny muted">{{ full.grade_note }}</span></dd>
+                        </dl>
+                        {% if full.kit.team %}
+                            <p class="small muted">Команда:</p>
+                            <ul class="chips">
+                                {% for member in full.kit.team %}
+                                    <li class="chip">{{ member }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% if full.kit.raw %}
+                            <details>
+                                <summary class="tiny muted">Распознанный текст сертификата</summary>
+                                <pre class="tiny">{{ full.kit.raw }}</pre>
+                            </details>
+                        {% endif %}
+                    {% else %}
+                        <p class="small muted">Сертификат КИТ не загружен или не распознан:
+                            грейд заявлен самим кандидатом либо получен по барометру амбиций,
+                            поэтому метка верификации не отображается.</p>
+                    {% endif %}
+                </article>
+            </section>
+
+            <section class="block">
+                <h2>История ФСП</h2>
+                <article class="card">
+                    {% if full.fsp.connected %}
+                        <div class="card-head">
+                            <h3>{{ full.fsp.score }} баллов</h3>
+                            <span class="badge badge-count">категория {{ full.fsp.category }}</span>
+                        </div>
+                        <p class="small">{{ full.fsp.category_title }}
+                            {% if full.fsp.best_role %} · старшая роль: {{ full.fsp.best_role }}{% endif %}</p>
+                        {% if full.fsp.disciplines %}
+                            <ul class="chips">
+                                {% for discipline in full.fsp.disciplines %}
+                                    <li class="chip">{{ discipline }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <table class="compact">
+                            <thead>
+                                <tr>
+                                    <th>Дисциплина</th><th>Соревнование</th>
+                                    <th>Место</th><th>Роль</th><th>Баллы</th><th>Дата</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in full.fsp.achievements %}
+                                    <tr>
+                                        <td>{{ item.discipline }}</td>
+                                        <td>{{ item.competition }}</td>
+                                        <td>{{ item.place }}</td>
+                                        <td>{{ item.role }}</td>
+                                        <td>{{ item.points }}</td>
+                                        <td>{{ item.date }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p class="small muted">Записей в реестре ФСП не найдено: 0 баллов,
+                            категория D, история ФСП не добавляет вес в релевантность.</p>
+                    {% endif %}
+                    {% if full.fsp_demo %}
+                        <p class="tiny muted">{{ FSP_DEMO_NOTE }}</p>
+                    {% endif %}
+                </article>
+            </section>
+
+            <section class="block">
+                <h2>Барометр амбиций</h2>
+                <article class="card">
+                    <p class="small">{{ full.ambitions_note }}</p>
+                    {% if full.ambitions_labels %}
+                        <ul class="chips">
+                            {% for label in full.ambitions_labels %}
+                                <li class="chip chip-accent">{{ label }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <p class="tiny muted">Флагов: {{ full.ambitions_flags }} из 4, порог — 2.
+                        Специализация определена: {{ full.specialization_source_label }}.</p>
+                </article>
+            </section>
+        {% endif %}
+
+        <section class="block">
+            <h2>На что обратить внимание</h2>
+            <article class="card">
+                {% if red_flags %}
+                    <ul class="tiny">
+                        {% for flag in red_flags %}
+                            <li>{{ flag }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="small">Ограничений нет: профиль полный, грейд верифицирован
+                        сертификатом КИТ, амбиции подтверждены флагами барометра.</p>
+                {% endif %}
+            </article>
+        </section>
+    </div>
+
+
+    <aside>
+        <article class="card">
+            <h2>Пригласить на потребность</h2>
+            {% if vacancies %}
+                {% for vacancy in vacancies %}
+                    <form action="/employer/vacancies/{{ vacancy.id }}/invite" method="post">
+                        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                        <div class="card-head">
+                            <h3>{{ vacancy.title }}</h3>
+                            <span class="badge badge-count">
+                                {{ salary_note(vacancy.salary_min, vacancy.salary_max) }}</span>
+                        </div>
+                        <p class="tiny muted">{{ format_title(vacancy.format) }}
+                            {% if vacancy.city %} · {{ vacancy.city }}{% endif %} ·
+                            {{ grade_title(vacancy.grade) }}</p>
+                        <label for="message-{{ vacancy.id }}">Сообщение кандидату
+                            <textarea id="message-{{ vacancy.id }}" name="message" rows="2"
+                                      placeholder="Приглашаем на позицию «{{ vacancy.title }}»: {{ salary_note(vacancy.salary_min, vacancy.salary_max) }}"></textarea>
+                        </label>
+                        <div class="actions">
+                            <button type="submit" class="small">Отправить приглашение</button>
+                        </div>
+                    </form>
+                {% endfor %}
+            {% else %}
+                <div class="empty">Потребностей пока нет: создайте первую, чтобы отправить
+                    приглашение с вилкой.</div>
+                <div class="actions">
+                    <a href="/employer/vacancies/new" role="button" class="small">Новая потребность</a>
+                </div>
+            {% endif %}
+        </article>
+
+        <article class="card">
+            <h3>Ваш уровень процессов</h3>
+            <p class="small"><strong>{{ tier_label }}</strong></p>
+            <p class="tiny muted">{{ TIER_DESCRIPTIONS.get(employer.tier, '') }}</p>
+            <ul class="chips">
+                {% for field in visible_fields %}
+                    <li class="chip">{{ field }}</li>
+                {% endfor %}
+            </ul>
+            <div class="card-foot">
+                <a href="/employer/survey" role="button" class="small secondary">Анкета процессов</a>
+            </div>
+        </article>
+
+        <article class="card note-accent">
+            <p class="small">{{ CONTACT_REVEAL_NOTE }}.</p>
+        </article>
+    </aside>
+</div>
+{% endblock %}

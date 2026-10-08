@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{# Профиль закрыт (разделы 8.4, 6.7): показываем только причину, без ФИО и контактов.
+   Контекст: employer, candidate_masked, specialization_title (строка), reason, tier_label. #}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Профиль закрыт</h1>
+        <p class="small muted">{{ candidate_masked }} · {{ specialization_title }}</p>
+    </div>
+    <div class="actions">
+        <a href="/employer/bank" role="button" class="small secondary">К банку кандидатов</a>
+        <a href="/employer" role="button" class="small secondary">В кабинет</a>
+    </div>
+</div>
+
+<article class="card note">
+    <h2><span class="field-locked">Доступ ограничен</span></h2>
+    <p class="small">{{ reason }}.</p>
+    <p class="small"><span class="field-locked">Приглашение недоступно</span>, пока профиль
+        закрыт: кнопка «Пригласить» в банке и в потребностях для этого кандидата не сработает,
+        а платформа вернёт причину отказа.</p>
+    <p class="small muted">Платформа не раскрывает ФИО, контакты, город и состав команды,
+        пока доступ не разрешён: либо кандидат скрыл анкету из банка, либо её грейд
+        не верифицирован сертификатом КИТ, либо уровень организации процессов
+        ниже требуемого матрицей раздела 8.</p>
+    <dl class="kv">
+        <dt>Ваш уровень процессов</dt>
+        <dd>{{ tier_label }}</dd>
+        <dt>Доступные поля</dt>
+        <dd class="tiny">{{ TIER_FIELDS.get(employer.tier, []) | join(', ') }}</dd>
+        <dt>Что можно сделать</dt>
+        <dd class="tiny">Заполнить анкету из шести вопросов о процессах — уровень
+            и состав видимых полей пересчитываются сразу после сохранения.</dd>
+    </dl>
+    <div class="actions">
+        <a href="/employer/survey" role="button" class="small">Пересчитать уровень процессов</a>
+        <a href="/employer/bank" role="button" class="small secondary">Другие кандидаты</a>
+    </div>
+</article>
+
+<div class="grid-2">
+    <article class="card">
+        <h3>Матрица видимости</h3>
+        <dl class="kv">
+            {% for tier in [3, 2, 1] %}
+                <dt>Уровень {{ tier }}</dt>
+                <dd class="tiny">{{ TIER_DESCRIPTIONS[tier] }}</dd>
+            {% endfor %}
+        </dl>
+        <p class="tiny muted">Кандидату цифра уровня не раскрывается: он видит только
+            состав доступных полей и причину, если профиль закрыт.</p>
+    </article>
+    <article class="card note-accent">
+        <h3>Основная механика</h3>
+        <p class="small">Работодатель находит кандидата и отправляет приглашение с вилкой,
+            а кандидат решает, принимать ли его. {{ CONTACT_REVEAL_NOTE }}.</p>
+    </article>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{# Подтверждение email (раздел 12.1): код живёт 15 минут, в MVP показывается на экране. #}
+{% block content %}
+<div class="grid-2">
+    <article>
+        <h1>Подтверждение email</h1>
+        <p class="small">Отправили шестизначный код на <strong>{{ email }}</strong>
+            (роль: {{ role_title }}). Код действителен 15 минут.</p>
+
+        {% if error %}
+            <div class="flash flash-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form action="/verify" method="post">
+            <label for="code">Код из письма
+                <input type="text" id="code" name="code" inputmode="numeric"
+                       pattern="[0-9]{6}" maxlength="6" placeholder="123456"
+                       autocomplete="one-time-code" required autofocus>
+            </label>
+            <button type="submit">Подтвердить и продолжить</button>
+        </form>
+
+        <p class="tiny muted">Не пришло? <a href="/login">Запросите код заново</a> —
+            сессия будет создана повторно.</p>
+    </article>
+
+    <aside>
+        <article class="card note-accent">
+            <h3>Демо-код</h3>
+            <p class="small">Вместо SMTP используется заглушка, ваш код:</p>
+            <p><kbd style="font-size:1.4rem; letter-spacing:.3rem">{{ demo_code }}</kbd></p>
+            <p class="tiny muted">{{ AUTH_DEMO_NOTE }}</p>
+        </article>
+        <article class="card">
+            <h3>Что будет дальше</h3>
+            {% if role == 'employer' %}
+                <p class="small">Анкета компании → анкета из шести вопросов о процессах.
+                    Ответы определяют, какие поля кандидатов вы увидите.</p>
+            {% else %}
+                <p class="small">Профиль и барометр амбиций → история ФСП → сертификат КИТ.
+                    Грейд из сертификата имеет высший приоритет.</p>
+            {% endif %}
+        </article>
+    </aside>
+</div>
+{% endblock %}
